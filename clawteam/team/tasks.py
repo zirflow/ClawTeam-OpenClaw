@@ -1,0 +1,202 @@
+"""Task store for shared team task management."""
+
+from __future__ import annotations
+
+import json
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any
+
+from clawteam.team.models import TaskItem, TaskStatus, get_data_dir
+
+
+class TaskLockError(Exception):
+    """Raised when a task is locked by another agent."""
+
+
+def _tasks_root(team_name: str) -> Path:
+    d = get_data_dir() / "tasks" / team_name
+    d.mkdir(parents=True, exist_ok=True)
+    return d
+
+
+def _task_path(team_name: str, task_id: str) -> Path:
+    return _tasks_root(team_name) / f"task-{task_id}.json"
+
+
+def _now_iso() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+class TaskStore:
+    """File-based task store with dependency tracking.
+
+    Each task is stored as a separate JSON file:
+    ``{data_dir}/tasks/{team}/task-{id}.json``
+    """
+
+    def __init__(self, team_name: str):
+        self.team_name = team_name
+
+    def create(
+        self,
+        subject: str,
+        description: str = "",
+        owner: str = "",
+        blocks: list[str] | None = None,
+        blocked_by: list[str] | None = None,
+        metadata: dict[str, Any] | None = None,
+    ) -> TaskItem:
+        task = TaskItem(
+            subject=subject,
+            description=description,
+            owner=owner,
+            blocks=blocks or [],
+            blocked_by=blocked_by or [],
+            metadata=metadata or {},
+        )
+        if task.blocked_by:
+            task.status = TaskStatus.blocked
+        self._save(task)
+        return task
+
+    def get(self, task_id: str) -> TaskItem | None:
+        path = _task_path(self.team_name, task_id)
+        if not path.exists():
+            return None
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+            return TaskItem.model_validate(data)
+        except Exception:
+            return None
+
+    def update(
+        self,
+        task_id: str,
+        status: TaskStatus | None = None,
+        owner: str | None = None,
+        subject: str | None = None,
+        description: str | None = None,
+        add_blocks: list[str] | None = None,
+        add_blocked_by: list[str] | None = None,
+        metadata: dict[str, Any] | None = None,
+        caller: str = "",
+        force: bool = False,
+    ) -> TaskItem | None:
+        task = self.get(task_id)
+        if not task:
+            return None
+
+        # Lock logic when transitioning to in_progress
+        if status == TaskStatus.in_progress:
+            self._acquire_lock(task, caller, force)
+
+        # Clear lock when transitioning to completed or pending
+        if status in (TaskStatus.completed, TaskStatus.pending):
+            task.locked_by = ""
+            task.locked_at = ""
+
+        if status is not None:
+            task.status = status
+        if owner is not None:
+            task.owner = owner
+        if subject is not None:
+            task.subject = subject
+        if description is not None:
+            task.description = description
+        if add_blocks:
+            for b in add_blocks:
+                if b not in task.blocks:
+                    task.blocks.append(b)
+        if add_blocked_by:
+            for b in add_blocked_by:
+                if b not in task.blocked_by:
+                    task.blocked_by.append(b)
+        if metadata:
+            task.metadata.update(metadata)
+        task.updated_at = _now_iso()
+
+        if task.status == TaskStatus.completed:
+            self._resolve_dependents(task_id)
+
+        self._save(task)
+        return task
+
+    def _acquire_lock(self, task: TaskItem, caller: str, force: bool) -> None:
+        """Acquire lock on a task for the caller agent."""
+        if task.locked_by and task.locked_by != caller and not force:
+            # Check if lock holder is still alive via spawn registry
+            from clawteam.spawn.registry import is_agent_alive
+            alive = is_agent_alive(self.team_name, task.locked_by)
+            if alive is not False:
+                # Lock holder is alive or unknown — refuse
+                raise TaskLockError(
+                    f"Task '{task.id}' is locked by '{task.locked_by}' "
+                    f"(since {task.locked_at}). Use --force to override."
+                )
+            # Lock holder is dead — release and continue
+
+        task.locked_by = caller or ""
+        task.locked_at = _now_iso() if caller else ""
+
+    def release_stale_locks(self) -> list[str]:
+        """Scan all tasks and release locks held by dead agents.
+
+        Returns list of task IDs whose locks were released.
+        """
+        from clawteam.spawn.registry import is_agent_alive
+
+        released = []
+        for task in self.list_tasks():
+            if not task.locked_by:
+                continue
+            alive = is_agent_alive(self.team_name, task.locked_by)
+            if alive is False:
+                task.locked_by = ""
+                task.locked_at = ""
+                task.updated_at = _now_iso()
+                self._save(task)
+                released.append(task.id)
+        return released
+
+    def list_tasks(
+        self, status: TaskStatus | None = None, owner: str | None = None
+    ) -> list[TaskItem]:
+        root = _tasks_root(self.team_name)
+        tasks = []
+        for f in sorted(root.glob("task-*.json")):
+            try:
+                data = json.loads(f.read_text(encoding="utf-8"))
+                task = TaskItem.model_validate(data)
+                if status and task.status != status:
+                    continue
+                if owner and task.owner != owner:
+                    continue
+                tasks.append(task)
+            except Exception:
+                continue
+        return tasks
+
+    def _save(self, task: TaskItem) -> None:
+        path = _task_path(self.team_name, task.id)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        tmp = path.with_suffix(".tmp")
+        tmp.write_text(
+            task.model_dump_json(indent=2, by_alias=True), encoding="utf-8"
+        )
+        tmp.rename(path)
+
+    def _resolve_dependents(self, completed_task_id: str) -> None:
+        root = _tasks_root(self.team_name)
+        for f in root.glob("task-*.json"):
+            try:
+                data = json.loads(f.read_text(encoding="utf-8"))
+                task = TaskItem.model_validate(data)
+                if completed_task_id in task.blocked_by:
+                    task.blocked_by.remove(completed_task_id)
+                    if not task.blocked_by and task.status == TaskStatus.blocked:
+                        task.status = TaskStatus.pending
+                    task.updated_at = _now_iso()
+                    self._save(task)
+            except Exception:
+                continue
