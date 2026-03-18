@@ -128,6 +128,7 @@ class TaskItem(BaseModel):
     locked_at: str = Field(default="", alias="lockedAt")
     blocks: list[str] = Field(default_factory=list)
     blocked_by: list[str] = Field(default_factory=list, alias="blockedBy")
+    started_at: str = Field(default="", alias="startedAt")
     created_at: str = Field(default_factory=_now_iso, alias="createdAt")
     updated_at: str = Field(default_factory=_now_iso, alias="updatedAt")
     metadata: dict[str, Any] = Field(default_factory=dict)

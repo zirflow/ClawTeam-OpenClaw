@@ -90,11 +90,23 @@ class TaskStore:
         # Lock logic when transitioning to in_progress
         if status == TaskStatus.in_progress:
             self._acquire_lock(task, caller, force)
+            # Record when work actually started
+            if not task.started_at:
+                task.started_at = _now_iso()
 
         # Clear lock when transitioning to completed or pending
         if status in (TaskStatus.completed, TaskStatus.pending):
             task.locked_by = ""
             task.locked_at = ""
+
+        # Compute duration when completing a task that has a start time
+        if status == TaskStatus.completed and task.started_at:
+            try:
+                start = datetime.fromisoformat(task.started_at)
+                duration_secs = (datetime.now(timezone.utc) - start).total_seconds()
+                task.metadata["duration_seconds"] = round(duration_secs, 2)
+            except (ValueError, TypeError):
+                pass  # malformed timestamp, skip
 
         if status is not None:
             task.status = status
@@ -176,6 +188,30 @@ class TaskStore:
             except Exception:
                 continue
         return tasks
+
+    def get_stats(self) -> dict[str, Any]:
+        """Aggregate task timing stats for this team.
+
+        Returns dict with total tasks, completed count, and avg duration
+        (only counting tasks that have duration_seconds in metadata).
+        """
+        tasks = self.list_tasks()
+        completed = [t for t in tasks if t.status == TaskStatus.completed]
+        durations = [
+            t.metadata["duration_seconds"]
+            for t in completed
+            if "duration_seconds" in t.metadata
+        ]
+        avg_duration = sum(durations) / len(durations) if durations else 0.0
+        return {
+            "total": len(tasks),
+            "completed": len(completed),
+            "in_progress": sum(1 for t in tasks if t.status == TaskStatus.in_progress),
+            "pending": sum(1 for t in tasks if t.status == TaskStatus.pending),
+            "blocked": sum(1 for t in tasks if t.status == TaskStatus.blocked),
+            "timed_completed": len(durations),
+            "avg_duration_seconds": round(avg_duration, 2),
+        }
 
     def _save(self, task: TaskItem) -> None:
         path = _task_path(self.team_name, task.id)

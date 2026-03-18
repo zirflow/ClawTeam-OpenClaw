@@ -4,7 +4,7 @@ from unittest.mock import patch
 
 import pytest
 
-from clawteam.team.models import TaskStatus
+from clawteam.team.models import TaskItem, TaskStatus
 from clawteam.team.tasks import TaskLockError, TaskStore
 
 
@@ -212,3 +212,101 @@ class TestTaskLocking:
         with patch("clawteam.spawn.registry.is_agent_alive", return_value=False):
             updated = store.update(t.id, status=TaskStatus.in_progress, caller="live-agent")
         assert updated.locked_by == "live-agent"
+
+
+class TestDurationTracking:
+    """Tests for the started_at / duration tracking feature."""
+
+    def test_started_at_set_on_in_progress(self, store):
+        t = store.create("timed task")
+        assert t.started_at == ""
+
+        with patch("clawteam.team.tasks.TaskStore._acquire_lock"):
+            updated = store.update(t.id, status=TaskStatus.in_progress, caller="a")
+        assert updated.started_at != ""
+
+    def test_started_at_not_overwritten_on_second_in_progress(self, store):
+        """If a task goes in_progress twice, keep the original start time."""
+        t = store.create("double start")
+        with patch("clawteam.team.tasks.TaskStore._acquire_lock"):
+            updated = store.update(t.id, status=TaskStatus.in_progress, caller="a")
+        first_start = updated.started_at
+
+        with patch("clawteam.team.tasks.TaskStore._acquire_lock"):
+            updated2 = store.update(t.id, status=TaskStatus.in_progress, caller="a")
+        assert updated2.started_at == first_start
+
+    def test_duration_computed_on_completion(self, store):
+        t = store.create("will complete")
+        with patch("clawteam.team.tasks.TaskStore._acquire_lock"):
+            store.update(t.id, status=TaskStatus.in_progress, caller="a")
+
+        completed = store.update(t.id, status=TaskStatus.completed)
+        assert "duration_seconds" in completed.metadata
+        # duration should be non-negative (task just started moments ago)
+        assert completed.metadata["duration_seconds"] >= 0
+
+    def test_no_duration_without_started_at(self, store):
+        """Completing a task that was never in_progress shouldn't crash."""
+        t = store.create("skip to done")
+        completed = store.update(t.id, status=TaskStatus.completed)
+        assert "duration_seconds" not in completed.metadata
+
+    def test_started_at_persists_through_serialization(self, store):
+        t = store.create("persist check")
+        with patch("clawteam.team.tasks.TaskStore._acquire_lock"):
+            store.update(t.id, status=TaskStatus.in_progress, caller="a")
+
+        reloaded = store.get(t.id)
+        assert reloaded.started_at != ""
+
+    def test_started_at_alias(self):
+        """The field should serialize as 'startedAt' (camelCase)."""
+        t = TaskItem(subject="alias test")
+        dumped = t.model_dump(by_alias=True)
+        assert "startedAt" in dumped
+
+
+class TestGetStats:
+    def test_stats_empty_team(self, store):
+        stats = store.get_stats()
+        assert stats["total"] == 0
+        assert stats["completed"] == 0
+        assert stats["avg_duration_seconds"] == 0.0
+
+    def test_stats_counts(self, store):
+        store.create("one")
+        store.create("two")
+        t3 = store.create("three")
+        store.update(t3.id, status=TaskStatus.completed)
+
+        stats = store.get_stats()
+        assert stats["total"] == 3
+        assert stats["completed"] == 1
+        assert stats["pending"] == 2
+
+    def test_stats_with_timed_tasks(self, store):
+        t = store.create("timed")
+        with patch("clawteam.team.tasks.TaskStore._acquire_lock"):
+            store.update(t.id, status=TaskStatus.in_progress, caller="a")
+        store.update(t.id, status=TaskStatus.completed)
+
+        stats = store.get_stats()
+        assert stats["timed_completed"] == 1
+        assert stats["avg_duration_seconds"] >= 0
+
+    def test_stats_avg_excludes_untimed(self, store):
+        """Tasks completed without going through in_progress shouldn't affect avg."""
+        # one task goes through the full flow
+        t1 = store.create("full flow")
+        with patch("clawteam.team.tasks.TaskStore._acquire_lock"):
+            store.update(t1.id, status=TaskStatus.in_progress, caller="a")
+        store.update(t1.id, status=TaskStatus.completed)
+
+        # another task jumps straight to completed
+        t2 = store.create("shortcut")
+        store.update(t2.id, status=TaskStatus.completed)
+
+        stats = store.get_stats()
+        assert stats["completed"] == 2
+        assert stats["timed_completed"] == 1
