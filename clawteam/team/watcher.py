@@ -2,10 +2,8 @@
 
 from __future__ import annotations
 
-import json
 import signal
 import subprocess
-import sys
 import time
 
 from clawteam.team.mailbox import MailboxManager
@@ -84,6 +82,6 @@ class InboxWatcher:
                 timeout=30,
             )
         except subprocess.TimeoutExpired:
-            print(f"[warn] exec callback timed out", flush=True)
+            print("[warn] exec callback timed out", flush=True)
         except Exception as e:
             print(f"[warn] exec callback failed: {e}", flush=True)

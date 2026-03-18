@@ -249,7 +249,7 @@ def team_spawn_team(
     leader_name = agent_name or identity.agent_name
 
     try:
-        config = TeamManager.create_team(
+        TeamManager.create_team(
             name=name,
             leader_name=leader_name,
             leader_id=leader_id,
@@ -311,7 +311,7 @@ def team_request_join(
     from clawteam.team.manager import TeamManager
     from clawteam.team.models import MessageType
 
-    identity = AgentIdentity.from_env()
+    AgentIdentity.from_env()
     config = TeamManager.get_team(team)
     if not config:
         _output({"error": f"Team '{team}' not found"}, lambda d: console.print(f"[red]{d['error']}[/red]"))
@@ -1675,9 +1675,10 @@ def spawn_agent(
 
     # Auto-register agent as team member
     import os as _os2
-    from clawteam.team.manager import TeamManager as _TM
+
+    from clawteam.team.manager import TeamManager
     try:
-        _TM.add_member(
+        TeamManager.add_member(
             team_name=_team,
             member_name=_name,
             agent_id=_id,
@@ -2002,8 +2003,7 @@ def workspace_status(
     repo: Optional[str] = typer.Option(None, "--repo", help="Git repo path"),
 ):
     """Show git diff stat for an agent's workspace."""
-    from clawteam.workspace import get_workspace_manager
-    from clawteam.workspace import git
+    from clawteam.workspace import get_workspace_manager, git
 
     ws_mgr = get_workspace_manager(repo)
     if ws_mgr is None:
