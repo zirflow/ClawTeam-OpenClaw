@@ -118,7 +118,9 @@ Full compatibility with [Claude Code](https://claude.ai/claude-code), [Codex](ht
 
 ---
 
-https://github.com/user-attachments/assets/f6f0b220-9a5e-4d0a-a25d-f80753d3639b
+
+https://github.com/user-attachments/assets/7e2f0ecd-8fe3-4970-90ac-5c9669ff060c
+
 
 ☝️ Intelligent leader agent orchestrates 8 specialized sub-agents across 8 H100 GPUs, autonomously designing experiments and dynamically reallocating resources based on real-time performance.
 
