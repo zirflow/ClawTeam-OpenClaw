@@ -347,6 +347,12 @@ pip install -e .
 pip install -e ".[p2p]"
 ```
 
+**For OpenClaw users** — use the one-command installer that handles everything (pip install + PATH fix + skill):
+
+```bash
+git clone https://github.com/win4r/ClawTeam-OpenClaw.git && cd ClawTeam-OpenClaw && bash scripts/install-openclaw.sh
+```
+
 Requires **Python 3.10+**, **tmux**, and a CLI coding agent (e.g. `openclaw`, `claude`, `codex`). Python dependencies: `typer`, `pydantic`, `rich`.
 
 ---
@@ -357,16 +363,38 @@ This fork is fully adapted for [OpenClaw](https://openclaw.ai) as the **default 
 
 ### Setup for OpenClaw
 
+#### Option A: One-Command Install (Recommended)
+
+```bash
+git clone https://github.com/win4r/ClawTeam-OpenClaw.git
+cd ClawTeam-OpenClaw
+bash scripts/install-openclaw.sh
+```
+
+The install script automatically:
+- Checks dependencies (Python 3.10+, tmux, OpenClaw)
+- Installs ClawTeam via pip
+- Creates `~/bin/clawteam` symlink (fixes PATH issues with OpenClaw agents)
+- Copies the OpenClaw skill to `~/.openclaw/workspace/skills/clawteam/`
+- Verifies everything works
+
+#### Option B: Manual Install
+
 ```bash
 # 1. Install ClawTeam
 pip install clawteam
 # Or from this repo:
 git clone https://github.com/win4r/ClawTeam-OpenClaw.git && cd ClawTeam-OpenClaw && pip install -e .
 
-# 2. Install the OpenClaw skill (enables natural language usage)
+# 2. Make clawteam accessible to OpenClaw agents (fixes PATH issue)
+mkdir -p ~/bin
+ln -sf $(python3 -c "import shutil; print(shutil.which('clawteam') or '/Library/Frameworks/Python.framework/Versions/3.11/bin/clawteam')") ~/bin/clawteam
+
+# 3. Install the OpenClaw skill (enables natural language usage)
+mkdir -p ~/.openclaw/workspace/skills/clawteam
 cp skills/openclaw/SKILL.md ~/.openclaw/workspace/skills/clawteam/SKILL.md
 
-# 3. Verify
+# 4. Verify
 clawteam --version
 openclaw skills list | grep clawteam
 ```
