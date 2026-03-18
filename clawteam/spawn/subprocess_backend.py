@@ -57,6 +57,11 @@ class SubprocessBackend(SpawnBackend):
             if _is_codex_command(command):
                 # Codex accepts prompt as positional argument
                 final_command.append(prompt)
+            elif _is_openclaw_command(command):
+                # OpenClaw agent mode: use --message for the prompt
+                if "agent" not in final_command and "tui" not in final_command:
+                    final_command.insert(1, "agent")
+                final_command.extend(["--message", prompt])
             else:
                 final_command.extend(["-p", prompt])
 
@@ -115,3 +120,11 @@ def _is_codex_command(command: list[str]) -> bool:
         return False
     cmd = command[0].rsplit("/", 1)[-1]
     return cmd in ("codex", "codex-cli")
+
+
+def _is_openclaw_command(command: list[str]) -> bool:
+    """Check if the command is an OpenClaw CLI invocation."""
+    if not command:
+        return False
+    cmd = command[0].rsplit("/", 1)[-1]
+    return cmd in ("openclaw",)

@@ -67,6 +67,16 @@ class TmuxBackend(SpawnBackend):
             elif _is_codex_command(command):
                 final_command.append("--dangerously-bypass-approvals-and-sandbox")
 
+        # OpenClaw TUI: pass --message for initial prompt
+        if prompt and _is_openclaw_command(command):
+            # Use openclaw tui with initial message for interactive tmux usage
+            if final_command[0].endswith("openclaw") and len(final_command) == 1:
+                final_command = [final_command[0], "tui", "--message", prompt]
+            elif "tui" in final_command:
+                final_command.extend(["--message", prompt])
+            elif "agent" in final_command:
+                final_command.extend(["--message", prompt])
+
         # Codex accepts prompt as a positional argument directly
         if prompt and _is_codex_command(command):
             final_command.append(prompt)
@@ -77,9 +87,9 @@ class TmuxBackend(SpawnBackend):
             f"clawteam lifecycle on-exit --team {shlex.quote(team_name)} "
             f"--agent {shlex.quote(agent_name)}"
         )
-        # Unset Claude nesting-detection env vars so spawned claude agents
-        # don't refuse to start when the leader is itself a claude session.
-        unset_clause = "unset CLAUDECODE CLAUDE_CODE_ENTRYPOINT CLAUDE_CODE_SESSION 2>/dev/null; "
+        # Unset nesting-detection env vars so spawned agents
+        # don't refuse to start when the leader is itself a session.
+        unset_clause = "unset CLAUDECODE CLAUDE_CODE_ENTRYPOINT CLAUDE_CODE_SESSION OPENCLAW_NESTED 2>/dev/null; "
         if cwd:
             full_cmd = f"{unset_clause}cd {shlex.quote(cwd)} && {env_str} {cmd_str}; {exit_hook}"
         else:
@@ -107,8 +117,8 @@ class TmuxBackend(SpawnBackend):
                 stderr=subprocess.PIPE,
             )
 
-        # Send the prompt as input to the interactive claude session
-        # (codex prompt is passed as positional arg above, so skip here)
+        # Send the prompt as input to the interactive session
+        # OpenClaw TUI and Codex already received prompt via command args, skip here.
         if prompt and _is_claude_command(command):
             # Wait briefly for claude to start up
             time.sleep(2)
@@ -151,8 +161,8 @@ class TmuxBackend(SpawnBackend):
                 stderr=subprocess.PIPE,
             )
             os.unlink(tmp_path)
-        elif prompt and not _is_codex_command(command):
-            # Non-claude/non-codex command: append prompt via send-keys
+        elif prompt and not _is_codex_command(command) and not _is_openclaw_command(command):
+            # Generic command: append prompt via send-keys
             time.sleep(1)
             subprocess.run(
                 ["tmux", "send-keys", "-t", target, prompt, "Enter"],
@@ -282,6 +292,14 @@ def _is_codex_command(command: list[str]) -> bool:
     return cmd in ("codex", "codex-cli")
 
 
+def _is_openclaw_command(command: list[str]) -> bool:
+    """Check if the command is an OpenClaw CLI invocation."""
+    if not command:
+        return False
+    cmd = command[0].rsplit("/", 1)[-1]  # basename
+    return cmd in ("openclaw",)
+
+
 def _is_interactive_cli(command: list[str]) -> bool:
-    """Check if the command is an interactive AI CLI (claude or codex)."""
-    return _is_claude_command(command) or _is_codex_command(command)
+    """Check if the command is an interactive AI CLI."""
+    return _is_claude_command(command) or _is_codex_command(command) or _is_openclaw_command(command)

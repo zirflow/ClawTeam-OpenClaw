@@ -1588,7 +1588,7 @@ def spawn_agent(
 ):
     """Spawn a new agent process with identity + task as its initial prompt.
 
-    Defaults: tmux backend, claude command, git worktree isolation, skip-permissions on.
+    Defaults: tmux backend, openclaw command, git worktree isolation, skip-permissions on.
     """
     from clawteam.config import get_effective
     from clawteam.spawn import get_backend
@@ -1598,7 +1598,7 @@ def spawn_agent(
         backend, _ = get_effective("default_backend")
         backend = backend or "tmux"
     if not command:
-        command = ["claude"]
+        command = ["openclaw"]
 
     _team = team or "default"
     _name = agent_name or f"agent-{uuid.uuid4().hex[:6]}"

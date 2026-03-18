@@ -58,7 +58,7 @@ class TestModels:
         leader = AgentDef(name="lead")
         t = TemplateDef(name="my-tmpl", leader=leader)
         assert t.description == ""
-        assert t.command == ["claude"]
+        assert t.command == ["openclaw"]
         assert t.backend == "tmux"
         assert t.agents == []
         assert t.tasks == []

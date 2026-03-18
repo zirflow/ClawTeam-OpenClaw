@@ -1,4 +1,4 @@
-"""Agent identity for team context with dual-prefix environment variable support."""
+"""Agent identity for team context with multi-prefix environment variable support."""
 
 from __future__ import annotations
 
@@ -8,8 +8,14 @@ from dataclasses import dataclass, field
 
 
 def _env(clawteam_key: str, claude_code_key: str, default: str = "") -> str:
-    """Read from CLAWTEAM_* first, fall back to CLAUDE_CODE_*."""
-    return os.environ.get(clawteam_key) or os.environ.get(claude_code_key) or default
+    """Read from CLAWTEAM_* first, fall back to OPENCLAW_* or CLAUDE_CODE_*."""
+    openclaw_key = clawteam_key.replace("CLAWTEAM_", "OPENCLAW_", 1)
+    return (
+        os.environ.get(clawteam_key)
+        or os.environ.get(openclaw_key)
+        or os.environ.get(claude_code_key)
+        or default
+    )
 
 
 def _env_bool(clawteam_key: str, claude_code_key: str) -> bool:
@@ -35,7 +41,7 @@ class AgentIdentity:
 
     @classmethod
     def from_env(cls) -> AgentIdentity:
-        """Build identity from CLAWTEAM_* or CLAUDE_CODE_* environment variables."""
+        """Build identity from CLAWTEAM_*, OPENCLAW_*, or CLAUDE_CODE_* environment variables."""
         user = os.environ.get("CLAWTEAM_USER", "")
         if not user:
             from clawteam.config import load_config
