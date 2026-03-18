@@ -78,4 +78,8 @@ class FileTransport(Transport):
         inboxes_dir = _teams_root() / self.team_name / "inboxes"
         if not inboxes_dir.exists():
             return []
-        return [d.name for d in inboxes_dir.iterdir() if d.is_dir()]
+        # Filter out _pending_* temp directories used during join handshake
+        return [
+            d.name for d in inboxes_dir.iterdir()
+            if d.is_dir() and not d.name.startswith("_pending_")
+        ]

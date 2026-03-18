@@ -426,6 +426,19 @@ def team_approve_join(
         team_name=team,
     )
 
+    # Schedule cleanup of the _pending_ inbox directory after the joining agent
+    # has had time to consume the approval message. We do a best-effort immediate
+    # cleanup here since the message was just delivered; the joining agent will
+    # pick it up from the permanent inbox if it misses the temp one.
+    import shutil
+    from clawteam.team.models import get_data_dir
+    pending_dir = get_data_dir() / "teams" / team / "inboxes" / temp_inbox_name
+    if pending_dir.exists():
+        try:
+            shutil.rmtree(pending_dir)
+        except OSError:
+            pass
+
     _output(
         {"status": "approved", "requestId": request_id, "assignedName": final_name, "agentId": new_agent_id, "teamName": team},
         lambda d: console.print(f"[green]OK[/green] Approved '{final_name}' (id: {new_agent_id})"),
@@ -465,6 +478,16 @@ def team_reject_join(
         request_id=request_id,
         reason=reason or None,
     )
+
+    # Clean up the _pending_ inbox directory
+    import shutil
+    from clawteam.team.models import get_data_dir
+    pending_dir = get_data_dir() / "teams" / team / "inboxes" / temp_inbox_name
+    if pending_dir.exists():
+        try:
+            shutil.rmtree(pending_dir)
+        except OSError:
+            pass
 
     _output(
         {"status": "rejected", "requestId": request_id, "reason": reason},

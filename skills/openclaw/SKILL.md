@@ -169,6 +169,75 @@ clawteam --json team status my-team
 6. **Communicate**: Use `clawteam inbox broadcast` for team-wide updates
 7. **Cleanup**: `clawteam team cleanup webapp --force` when done
 
+## Leader Orchestration Pattern
+
+When YOU are the leader agent, follow this pattern to autonomously manage a swarm:
+
+### Phase 1: Analyze & Plan
+```
+1. Understand the user's goal
+2. Break it into independent subtasks
+3. Identify dependencies between tasks (what must finish before what)
+4. Decide how many worker agents are needed
+```
+
+### Phase 2: Setup
+```bash
+# Create team
+clawteam team spawn-team <team> -d "<goal description>" -n leader
+
+# Create tasks with dependency chains
+clawteam task create <team> "Design API" -o architect
+# Save the returned task ID (e.g., abc123)
+clawteam task create <team> "Build backend" -o backend --blocked-by abc123
+clawteam task create <team> "Build frontend" -o frontend --blocked-by abc123
+clawteam task create <team> "Integration tests" -o tester --blocked-by <backend-id>,<frontend-id>
+```
+
+### Phase 3: Spawn Workers
+```bash
+# Each spawn launches an openclaw tui in its own tmux window
+clawteam spawn -t <team> -n architect --task "Design REST API schema for <goal>"
+clawteam spawn -t <team> -n backend --task "Implement backend based on API schema"
+clawteam spawn -t <team> -n frontend --task "Build React frontend"
+clawteam spawn -t <team> -n tester --task "Write and run integration tests"
+```
+
+### Phase 4: Monitor Loop
+```bash
+# Poll task status every 30-60 seconds
+while true; do
+  clawteam --json task list <team> | python3 -c "
+import sys, json
+tasks = json.load(sys.stdin)
+done = sum(1 for t in tasks if t['status'] == 'completed')
+total = len(tasks)
+print(f'{done}/{total} complete')
+if done == total: print('ALL DONE'); sys.exit(0)
+"
+  # Check for messages from workers
+  clawteam inbox receive <team>
+  sleep 30
+done
+```
+
+### Phase 5: Converge & Report
+```bash
+# After all tasks complete:
+clawteam board show <team>           # Final status
+clawteam cost show <team>            # Total cost
+clawteam workspace merge <team> --agent <name>  # Merge each worker's branch
+clawteam team cleanup <team> --force  # Clean up
+```
+
+### Decision Rules for the Leader
+- **Independent tasks** → spawn workers in parallel
+- **Sequential tasks** → use `--blocked-by` to chain them; ClawTeam auto-unblocks
+- **Worker asks for help** → check inbox, provide guidance via `inbox send`
+- **Worker stuck** → check task status; if `in_progress` too long, send a nudge
+- **Worker done** → verify result via inbox message, then move to next phase
+- **All done** → merge worktrees, report to user, cleanup
+
 ## Data Location
 
 All state stored in `~/.clawteam/`:
