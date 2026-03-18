@@ -93,7 +93,10 @@ def config_show():
     """Show all configuration settings and their sources."""
     from clawteam.config import get_effective
 
-    keys = ["data_dir", "user", "default_team"]
+    keys = [
+        "data_dir", "user", "default_team",
+        "transport", "workspace", "default_backend", "skip_permissions",
+    ]
     data = {}
     for k in keys:
         val, source = get_effective(k)
@@ -105,7 +108,8 @@ def config_show():
         table.add_column("Value")
         table.add_column("Source", style="dim")
         for k in keys:
-            table.add_row(k, d[k]["value"] or "(empty)", d[k]["source"])
+            v = d[k]["value"]
+            table.add_row(k, str(v) if v != "" else "(empty)", d[k]["source"])
         console.print(table)
 
     _output(data, _human)
@@ -883,6 +887,42 @@ def task_list(
         console.print(table)
 
     _output(data, _human)
+
+
+@task_app.command("stats")
+def task_stats(
+    team: str = typer.Argument(..., help="Team name"),
+):
+    """Show task timing statistics for a team."""
+    from clawteam.team.tasks import TaskStore
+
+    store = TaskStore(team)
+    stats = store.get_stats()
+
+    def _human(d):
+        table = Table(title=f"Task Stats - {team}")
+        table.add_column("Metric", style="cyan")
+        table.add_column("Value", justify="right")
+        table.add_row("Total tasks", str(d["total"]))
+        table.add_row("Completed", str(d["completed"]))
+        table.add_row("In progress", str(d["in_progress"]))
+        table.add_row("Pending", str(d["pending"]))
+        table.add_row("Blocked", str(d["blocked"]))
+        table.add_row("With timing data", str(d["timed_completed"]))
+        avg = d["avg_duration_seconds"]
+        if avg > 0:
+            # Show in a readable format
+            if avg < 60:
+                table.add_row("Avg completion time", f"{avg:.1f}s")
+            elif avg < 3600:
+                table.add_row("Avg completion time", f"{avg / 60:.1f}m")
+            else:
+                table.add_row("Avg completion time", f"{avg / 3600:.1f}h")
+        else:
+            table.add_row("Avg completion time", "-")
+        console.print(table)
+
+    _output(stats, _human)
 
 
 # ============================================================================
