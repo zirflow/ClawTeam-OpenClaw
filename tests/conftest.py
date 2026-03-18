@@ -3,7 +3,6 @@
 We redirect all file-based state to tmp_path so tests never touch the real ~/.clawteam.
 """
 
-import os
 
 import pytest
 

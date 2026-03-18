@@ -1,6 +1,5 @@
 """Tests for clawteam.config — load/save/get_effective."""
 
-import json
 
 from clawteam.config import ClawTeamConfig, config_path, get_effective, load_config, save_config
 
@@ -72,14 +71,12 @@ class TestGetEffective:
 
     def test_default_backend_treated_as_file(self, monkeypatch):
         """default_backend has a non-empty default ('tmux'), so load_config()
-        always returns it truthy even with no config file on disk. The code
-        reports source='file' in that case -- this is expected behavior."""
+        returns the default value with source='default' when no config file
+        overrides it."""
         monkeypatch.delenv("CLAWTEAM_DEFAULT_BACKEND", raising=False)
         val, source = get_effective("default_backend")
         assert val == "tmux"
-        # load_config() returns ClawTeamConfig() with default_backend="tmux",
-        # which is truthy -> source is "file" not "default"
-        assert source == "file"
+        assert source == "default"
 
     def test_data_dir_env(self, monkeypatch):
         monkeypatch.setenv("CLAWTEAM_DATA_DIR", "/custom/path")

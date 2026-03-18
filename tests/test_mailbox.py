@@ -90,7 +90,6 @@ class TestPeek:
 class TestBroadcast:
     def test_broadcast_to_all_except_sender(self, team_name):
         mb = _make_mailbox(team_name)
-        transport = mb._transport
         # set up inboxes so list_recipients finds them
         from clawteam.team.models import get_data_dir
 

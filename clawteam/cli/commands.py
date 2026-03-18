@@ -93,7 +93,10 @@ def config_show():
     """Show all configuration settings and their sources."""
     from clawteam.config import get_effective
 
-    keys = ["data_dir", "user", "default_team"]
+    keys = [
+        "data_dir", "user", "default_team",
+        "transport", "workspace", "default_backend", "skip_permissions",
+    ]
     data = {}
     for k in keys:
         val, source = get_effective(k)
@@ -105,7 +108,8 @@ def config_show():
         table.add_column("Value")
         table.add_column("Source", style="dim")
         for k in keys:
-            table.add_row(k, d[k]["value"] or "(empty)", d[k]["source"])
+            v = d[k]["value"]
+            table.add_row(k, str(v) if v != "" else "(empty)", d[k]["source"])
         console.print(table)
 
     _output(data, _human)
