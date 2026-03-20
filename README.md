@@ -1,4 +1,4 @@
-<h1 align="center"><img src="assets/icon.png" alt="" width="64" style="vertical-align: middle;">&nbsp; ClawTeam-OpenClaw</h1>
+<h1 align="center">ClawTeam-OpenClaw</h1>
 
 <p align="center">
   <strong>Multi-agent swarm coordination for CLI coding agents — <a href="https://openclaw.ai">OpenClaw</a> as default</strong>
@@ -36,10 +36,6 @@ Current AI agents are powerful but work in **isolation**. ClawTeam lets agents s
 | **Infrastructure** | Filesystem + tmux | Redis, message queues, databases |
 | **Agent support** | Any CLI agent | Framework-specific only |
 | **Isolation** | Git worktrees (real branches) | Containers or virtual envs |
-
-<p align="center">
-  <img src="assets/comic-how-it-works.png" alt="How ClawTeam works" width="700">
-</p>
 
 ---
 
@@ -85,18 +81,6 @@ clawteam board serve --port 8080
 </td>
 </tr>
 </table>
-
----
-
-## Demo
-
-https://github.com/user-attachments/assets/7e2f0ecd-8fe3-4970-90ac-5c9669ff060c
-
-*Leader agent orchestrates 8 specialized sub-agents across 8 H100 GPUs, autonomously designing experiments and dynamically reallocating resources.*
-
-<p align="center">
-  <img src="assets/teaser.png" alt="ClawTeam architecture" width="800">
-</p>
 
 ---
 
@@ -184,10 +168,6 @@ Leader agent:
 ├── Reassigns GPUs as agents finish — fresh agents start from best known config
 └── Result: val_bpb 1.044 → 0.977 (6.4% improvement) across 2430 experiments in ~30 GPU-hours
 ```
-
-<p align="center">
-  <img src="assets/autoresearch-progress.png" alt="AutoResearch Progress" width="720">
-</p>
 
 Full results: [novix-science/autoresearch](https://github.com/novix-science/autoresearch)
 
@@ -462,7 +442,5 @@ MIT — free to use, modify, and distribute.
 <div align="center">
 
 **ClawTeam** — *Agent Swarm Intelligence.*
-
-<img src="assets/icon.png" alt="ClawTeam" width="80">
 
 </div>
