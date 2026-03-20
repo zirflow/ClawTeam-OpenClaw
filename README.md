@@ -1,171 +1,58 @@
 <h1 align="center"><img src="assets/icon.png" alt="" width="64" style="vertical-align: middle;">&nbsp; ClawTeam-OpenClaw</h1>
 
 <p align="center">
-  <strong>ClawTeam fork fully adapted for <a href="https://openclaw.ai">OpenClaw</a> — multi-agent swarm coordination with OpenClaw as the default agent</strong>
+  <strong>Multi-agent swarm coordination for CLI coding agents — <a href="https://openclaw.ai">OpenClaw</a> as default</strong>
 </p>
 
 <p align="center">
   <a href="https://github.com/HKUDS/ClawTeam"><img src="https://img.shields.io/badge/upstream-HKUDS%2FClawTeam-purple?style=for-the-badge" alt="Upstream"></a>
   <a href="#-quick-start"><img src="https://img.shields.io/badge/Quick_Start-3_min-blue?style=for-the-badge" alt="Quick Start"></a>
-  <a href="#-features"><img src="https://img.shields.io/badge/Features-15+-green?style=for-the-badge" alt="Features"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge" alt="License"></a>
 </p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/python-≥3.10-blue?logo=python&logoColor=white" alt="Python">
-  <img src="https://img.shields.io/badge/default_agent-OpenClaw-ff4500?logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHRleHQgeT0iMTgiIGZvbnQtc2l6ZT0iMTgiPvCfpp48L3RleHQ+PC9zdmc+" alt="OpenClaw">
   <img src="https://img.shields.io/badge/agents-OpenClaw_%7C_Claude_Code_%7C_Codex_%7C_nanobot-blueviolet" alt="Agents">
   <img src="https://img.shields.io/badge/transport-File_%7C_ZeroMQ_P2P-orange" alt="Transport">
   <img src="https://img.shields.io/badge/version-0.3.0-teal" alt="Version">
 </p>
 
-> **Fork of [HKUDS/ClawTeam](https://github.com/HKUDS/ClawTeam)** with deep OpenClaw integration: default `openclaw` agent, per-agent session isolation, exec approval auto-configuration, proactive monitoring patterns, and production-hardened spawn backends. All upstream bug fixes and features are synced.
+> **Fork of [HKUDS/ClawTeam](https://github.com/HKUDS/ClawTeam)** with deep OpenClaw integration: default `openclaw` agent, per-agent session isolation, exec approval auto-config, and production-hardened spawn backends. All upstream fixes are synced.
 
-**One Command Line: Full Automation.** — agents spawn swarms, delegate tasks, and deliver results.
+You set the goal. The agent swarm handles the rest — spawning workers, splitting tasks, coordinating, and merging results.
 
-Human provides the goal. The Agent Team orchestrates everything else.
-
-Full compatibility with [OpenClaw](https://openclaw.ai) (default), [Claude Code](https://claude.ai/claude-code), [Codex](https://openai.com/codex), [nanobot](https://github.com/HKUDS/nanobot), [Cursor](https://cursor.com), and any CLI agent.&nbsp;&nbsp;[**中文文档**](README_CN.md) | [**한국어**](README_KR.md)
+Works with [OpenClaw](https://openclaw.ai) (default), [Claude Code](https://claude.ai/claude-code), [Codex](https://openai.com/codex), [nanobot](https://github.com/HKUDS/nanobot), [Cursor](https://cursor.com), and any CLI agent.&nbsp;&nbsp;[**中文文档**](README_CN.md) | [**한국어**](README_KR.md)
 
 ---
 
-## ✨ ClawTeam's Key Features
+## Why ClawTeam?
 
-<table align="center" width="100%">
-<tr>
-<td width="25%" align="center" style="vertical-align: top; padding: 15px;">
+Current AI agents are powerful but work in **isolation**. ClawTeam lets agents self-organize into teams — splitting work, communicating, and converging on results without human micromanagement.
 
-<h3>🔬 AI Research Automation</h3>
-
-<div align="center">
-  <img src="https://img.shields.io/badge/AutoResearch-FF6B6B?style=for-the-badge&logo=pytorch&logoColor=white" alt="AutoResearch" />
-</div>
-
-<img src="assets/scene-autoresearch.png" width="180">
-
-<p align="center"><strong>• Large-Scale Automated ML Experimentation</strong></p>
-
-<p align="center"><strong>• AI Model Training & Optimization</strong></p>
-
-<p align="center"><strong>• AI-Driven Hypothesis Generation & Validation</strong></p>
-
-<p align="center"><strong>• Self-Improving Model Architectures</strong></p>
-
-</td>
-<td width="25%" align="center" style="vertical-align: top; padding: 15px;">
-
-<h3>🏗️ Agentic Engineering</h3>
-
-<div align="center">
-  <img src="https://img.shields.io/badge/Full--Stack_Dev-4ECDC4?style=for-the-badge&logo=git&logoColor=white" alt="Engineering" />
-</div>
-
-<img src="assets/scene-engineering.png" width="180">
-
-<p align="center"><strong>• Autonomous Full-Stack Development</strong></p>
-
-<p align="center"><strong>• Self-Evolving Software<strong></p>
-
-<p align="center"><strong>• Collaborative Open Source Development<strong></p>
-
-<p align="center"><strong>• Real-Time System Integration<strong></p>
-
-</td>
-<td width="25%" align="center" style="vertical-align: top; padding: 15px;">
-
-<h3>💰 AI Hedge Fund</h3>
-
-<div align="center">
-  <img src="https://img.shields.io/badge/Investment_Analysis-FFD93D?style=for-the-badge&logo=bitcoin&logoColor=black" alt="Hedge Fund" />
-</div>
-
-<img src="assets/scene-hedgefund.png" width="180">
-
-<p align="center"><strong>• Automated Market Research & Data Mining</strong></p>
-
-<p align="center"><strong>• Multi-Strategy Portfolio Optimization</strong></p>
-
-<p align="center"><strong>• Real-Time Risk Assessment</strong></p>
-
-<p align="center"><strong>• Algorithmic Trading Execution & Monitoring</strong></p>
-
-</td>
-<td width="25%" align="center" style="vertical-align: top; padding: 15px;">
-
-<h3>🎪 Your Own Swarm</h3>
-
-<div align="center">
-  <img src="https://img.shields.io/badge/TOML_Templates-C77DFF?style=for-the-badge&logo=toml&logoColor=white" alt="Templates" />
-</div>
-
-<img src="assets/scene-template.png" width="180">
-
-<p align="center"><strong>• Custom Scientific Research Teams</strong></p>
-
-<p align="center"><strong>• Personalized Investment Committees</strong></p>
-
-<p align="center"><strong>• Business Operations Teams</strong></p>
-
-<p align="center"><strong>• Content Production Studios</strong></p>
-
-</td>
-</tr>
-</table>
-
----
-
-
-https://github.com/user-attachments/assets/7e2f0ecd-8fe3-4970-90ac-5c9669ff060c
-
-
-☝️ Intelligent leader agent orchestrates 8 specialized sub-agents across 8 H100 GPUs, autonomously designing experiments and dynamically reallocating resources based on real-time performance.
-
-🧠 The system synthesizes breakthroughs across teams and evolves strategies independently — achieving full research automation without human intervention.
+| | ClawTeam | Other multi-agent frameworks |
+|---|---------|----------------------------|
+| **Who uses it** | The AI agents themselves | Humans writing orchestration code |
+| **Setup** | `pip install` + one prompt | Docker, cloud APIs, YAML configs |
+| **Infrastructure** | Filesystem + tmux | Redis, message queues, databases |
+| **Agent support** | Any CLI agent | Framework-specific only |
+| **Isolation** | Git worktrees (real branches) | Containers or virtual envs |
 
 <p align="center">
-  <img src="assets/teaser.png" alt="ClawTeam - AI agents orchestrating themselves" width="800">
+  <img src="assets/comic-how-it-works.png" alt="How ClawTeam works" width="700">
 </p>
 
 ---
 
-## 🤔 Why ClawTeam?
-
-Current AI agents are powerful — but they work in **isolation**. When facing complex tasks, you're stuck manually coordinating multiple agents, juggling context, and stitching together fragmented results.
-
-**What if agents could think and work as a team?**
-
-ClawTeam unlocks **Agent Swarm Intelligence** — where AI agents self-organize into collaborative teams, intelligently divide complex work, share insights in real-time, and converge on breakthrough solutions.
-
-• **🚀 Spawns specialized sub-agents** — each with dedicated environments and focus areas
-
-• **📋 Designs intelligent task allocation** — with smart dependency management
-
-• **💬 Facilitates real-time coordination** — seamless inter-agent communication
-
-• **📊 Monitors team performance** — tracks progress and identifies bottlenecks
-
-• **🔄 Adapts strategies dynamically** — reallocates resources and redirects efforts
-
-#### ✨ The Result?**
-You set the vision. The swarm executes with collective intelligence.
-
-<p align="center">
-  <img src="assets/comic-how-it-works.png" alt="How ClawTeam works - comic" width="700">
-</p>
-
----
-
-## 🎯 Swarm Intelligence in Action
+## How It Works
 
 <table>
 <tr>
 <td width="33%">
 
-### 🦞 Agents Spawn Agents
-The leader agent calls `clawteam spawn` to create workers. Each worker gets its own **git worktree**, **tmux window**, and **identity** — automatically.
+### Agents Spawn Agents
+The leader calls `clawteam spawn` to create workers. Each gets its own **git worktree**, **tmux window**, and **identity**.
 
 ```bash
-# The leader agent runs:
 clawteam spawn --team my-team \
   --agent-name worker1 \
   --task "Implement auth module"
@@ -174,13 +61,11 @@ clawteam spawn --team my-team \
 </td>
 <td width="33%">
 
-### 🤖 Agents Talk to Agents
-Workers check their inbox, update task status, and report results — all through CLI commands that are **auto-injected** into their prompt.
+### Agents Talk to Agents
+Workers check inboxes, update tasks, and report results — all through CLI commands **auto-injected** into their prompt.
 
 ```bash
-# A worker agent checks tasks:
 clawteam task list my-team --owner me
-# Then reports back:
 clawteam inbox send my-team leader \
   "Auth done. All tests passing."
 ```
@@ -188,13 +73,12 @@ clawteam inbox send my-team leader \
 </td>
 <td width="33%">
 
-### 👀 You Just Watch
-Monitor the swarm from a tiled tmux view or a Web UI. The leader handles coordination — you intervene only when you want to.
+### You Just Watch
+Monitor the swarm from a tiled tmux view or Web UI. The leader handles coordination.
 
 ```bash
-# Watch all agents simultaneously
 clawteam board attach my-team
-# Or open the web dashboard
+# Or web dashboard
 clawteam board serve --port 8080
 ```
 
@@ -202,140 +86,62 @@ clawteam board serve --port 8080
 </tr>
 </table>
 
-| | ClawTeam | Other multi-agent frameworks |
-|---|---------|----------------------------|
-| 🎯 **Who uses it** | **The AI agents themselves** | Humans writing orchestration code |
-| ⚡ **Setup** | `pip install` + one prompt to the leader | Docker, cloud APIs, YAML configs |
-| 🏗️ **Infrastructure** | Just a filesystem and tmux | Redis, message queues, databases |
-| 🤖 **Agent support** | Any CLI agent (Claude Code, Codex, OpenClaw, custom) | Framework-specific only |
-| 🌳 **Isolation** | Git worktrees (real branches, real diffs) | Containers or virtual envs |
-| 🧠 **Intelligence** | Swarm self-organizes via CLI commands | Hard-coded orchestration logic |
-
 ---
 
-## 🎬 Use Cases
+## Demo
 
-### 🔬 1. Autonomous ML Research — 8 Agents × 8 H100 GPUs
+https://github.com/user-attachments/assets/7e2f0ecd-8fe3-4970-90ac-5c9669ff060c
 
-Based on [@karpathy's autoresearch](https://github.com/karpathy/autoresearch).
-
-#### 💫 One Command. Full Automation.
-
-#### Human input: "Optimize this LLM training setup using 8 GPUs"
-
-The Agent Team handles everything else:
-- Spawns 8 specialized research agents across H100s
-- Designs 2000+ autonomous experiments
-- Achieves breakthrough improvements (val_bpb: 1.044→0.977)
-- Zero human intervention required
-
-#### 🎯 Pure Research at Scale
-
-Transform months of manual hyperparameter tuning into hours of intelligent automation.
+*Leader agent orchestrates 8 specialized sub-agents across 8 H100 GPUs, autonomously designing experiments and dynamically reallocating resources.*
 
 <p align="center">
-  <img src="assets/autoresearch-progress.png" alt="AutoResearch Progress" width="720">
-  <br>
-  <em>🏆 val_bpb: 1.044 → 0.977 (6.4% improvement) | 2430+ experiments | ~30 GPU-hours</em>
+  <img src="assets/teaser.png" alt="ClawTeam architecture" width="800">
 </p>
 
-**What agent team did autonomously:**
-
-```
-Human prompt: "Use 8 GPUs to optimize train.py. Read program.md for instructions."
-
-🦞 Leader agent's actions:
-├── 📖 Read program.md, understand the experiment protocol
-├── 🏗️ clawteam team spawn-team autoresearch
-├── 🚀 Assigned each GPU a research direction:
-│   ├── GPU 0: clawteam spawn --task "Explore model depth (DEPTH 10-16)"
-│   ├── GPU 1: clawteam spawn --task "Explore model width (ASPECT_RATIO 80-128)"
-│   ├── GPU 2: clawteam spawn --task "Tune learning rates and optimizer"
-│   ├── GPU 3: clawteam spawn --task "Explore batch size and accumulation"
-│   ├── GPU 4-7: clawteam spawn tmux codex --task "..."  (Codex agents)
-│   └── 🌳 Each agent: own git worktree, own branch, isolated experiments
-├── 🔄 Every 30 minutes, checked results:
-│   ├── clawteam board show autoresearch
-│   ├── Read each agent's results.tsv
-│   ├── 🏆 Identified best findings (depth=12, batch=2^17, norm-before-RoPE)
-│   └── 📡 Cross-pollinated: told new agents to start from the best config
-├── 🔧 When agents finished, reassigned GPUs:
-│   ├── Killed idle agents, cleaned worktrees
-│   ├── Created new worktrees from the best commit
-│   └── Spawned fresh agents with combined optimization directions
-└── ✅ After 2430+ experiments: val_bpb 1.044 → 0.977
-```
-
-Full results: [novix-science/autoresearch](https://github.com/novix-science/autoresearch)
-
 ---
 
-### 🏗️ 2. Agentic Software Engineering
+## Quick Start
 
-You tell Claude Code: *"Build me a full-stack todo app."* Claude realizes this is a multi-module task and **self-organizes a team**:
+### Option 1: Let the Agent Drive (Recommended)
+
+Install ClawTeam, then prompt your agent:
 
 ```
-Human prompt: "Build a full-stack todo app with auth, database, and React frontend."
-
-🦞 Leader agent's actions:
-├── 🏗️ clawteam team spawn-team webapp -d "Full-stack todo app"
-├── 📋 Created tasks with dependency chains:
-│   ├── T1: "Design REST API schema"          → architect
-│   ├── T2: "Implement JWT auth" --blocked-by T1  → backend1
-│   ├── T3: "Build database layer" --blocked-by T1 → backend2
-│   ├── T4: "Build React frontend"             → frontend
-│   └── T5: "Integration tests" --blocked-by T2,T3,T4 → tester
-├── 🚀 Spawned 5 sub-agents (each in its own git worktree):
-│   ├── clawteam spawn --agent-name architect --task "Design the API schema"
-│   ├── clawteam spawn --agent-name backend1  --task "Implement JWT auth"
-│   ├── clawteam spawn --agent-name backend2  --task "Build PostgreSQL models"
-│   ├── clawteam spawn --agent-name frontend  --task "Build React UI"
-│   └── clawteam spawn --agent-name tester    --task "Write pytest tests"
-├── 🔗 Dependency auto-resolution:
-│   ├── architect completes → backend1 and backend2 auto-unblock
-│   ├── All backends complete → tester auto-unblocks
-│   └── Each agent calls: clawteam task update <id> --status completed
-├── 💬 Sub-agents coordinate via inbox:
-│   ├── architect → backend1: "Here's the OpenAPI spec: ..."
-│   ├── backend1 → tester: "Auth endpoints ready at /api/auth/*"
-│   └── tester → leader: "All 47 tests passing ✅"
-└── 🌳 Leader merges all worktrees into main branch
+"Build a web app. Use clawteam to split the work across multiple agents."
 ```
 
----
+The agent auto-creates a team, spawns workers, assigns tasks, and coordinates — all via `clawteam` CLI.
 
-### 💰 3. AI Hedge Fund — One-Command Team Launch
-
-A pre-built TOML template spawns a complete **7-agent** investment analysis team:
+### Option 2: Drive It Manually
 
 ```bash
-# One command launches everything:
-clawteam launch hedge-fund --team fund1 --goal "Analyze AAPL, MSFT, NVDA for Q2 2026"
+# Create a team
+clawteam team spawn-team my-team -d "Build the auth module" -n leader
+
+# Spawn workers — each gets a git worktree + tmux window
+clawteam spawn --team my-team --agent-name alice --task "Implement OAuth2 flow"
+clawteam spawn --team my-team --agent-name bob   --task "Write unit tests for auth"
+
+# Watch them work
+clawteam board attach my-team
 ```
 
-```
-🦞 What happens automatically:
-├── 📊 Portfolio Manager (leader) spawns and receives the goal
-├── 🤖 5 Analyst agents spawn, each with a different strategy:
-│   ├── 🎩 Buffett Analyst    → value investing (moat, ROE, DCF)
-│   ├── 🚀 Growth Analyst     → disruption (TAM, network effects)
-│   ├── 📈 Technical Analyst  → indicators (EMA, RSI, Bollinger)
-│   ├── 📋 Fundamentals       → financial ratios (P/E, D/E, FCF)
-│   └── 📰 Sentiment Analyst  → news + insider trading signals
-├── 🛡️ Risk Manager spawns, waits for all analyst signals:
-│   ├── clawteam inbox receive fund1 (collects all 5 signals)
-│   ├── Consolidates + computes position limits
-│   └── clawteam inbox send fund1 portfolio-manager "RISK REPORT: ..."
-└── 💼 Portfolio Manager makes final buy/sell/hold decisions
-```
+### Supported Agents
 
-Templates are TOML files — **create your own team archetypes** for any domain.
+| Agent | Spawn Command | Status |
+|-------|--------------|--------|
+| [OpenClaw](https://openclaw.ai) | `clawteam spawn tmux openclaw --team ...` | **Default** |
+| [Claude Code](https://claude.ai/claude-code) | `clawteam spawn tmux claude --team ...` | Full support |
+| [Codex](https://openai.com/codex) | `clawteam spawn tmux codex --team ...` | Full support |
+| [nanobot](https://github.com/HKUDS/nanobot) | `clawteam spawn tmux nanobot --team ...` | Full support |
+| [Cursor](https://cursor.com) | `clawteam spawn subprocess cursor --team ...` | Experimental |
+| Custom scripts | `clawteam spawn subprocess python --team ...` | Full support |
 
 ---
 
-## 📦 Install
+## Install
 
-### Recommended: One-Command Installer
+### One-Command (Recommended)
 
 ```bash
 git clone https://github.com/win4r/ClawTeam-OpenClaw.git
@@ -343,326 +149,235 @@ cd ClawTeam-OpenClaw
 bash scripts/install-openclaw.sh
 ```
 
-The installer automatically: checks prerequisites (Python 3.10+, tmux, OpenClaw) → installs clawteam → creates `~/bin/clawteam` symlink → configures exec approvals → installs the OpenClaw skill file → verifies.
+The installer checks prerequisites (Python 3.10+, tmux, OpenClaw), installs ClawTeam, creates the `~/bin/clawteam` symlink, configures exec approvals, installs the OpenClaw skill, and verifies.
 
-### Manual Install
+### Manual
 
 ```bash
-# From this repo (recommended — includes all OpenClaw adaptations)
+# From this repo (recommended — includes OpenClaw adaptations)
 git clone https://github.com/win4r/ClawTeam-OpenClaw.git && cd ClawTeam-OpenClaw && pip install -e .
 
-# Or from upstream PyPI (generic version, defaults to claude instead of openclaw)
+# Or from upstream PyPI (generic, defaults to claude)
 pip install clawteam
 
 # Optional: P2P transport (ZeroMQ)
 pip install -e ".[p2p]"
 ```
 
-Requires **Python 3.10+**, **tmux**, and a CLI coding agent (e.g. `openclaw`, `claude`, `codex`). Python dependencies: `typer`, `pydantic`, `rich`.
+Requires **Python 3.10+**, **tmux**, and a CLI coding agent. Python dependencies: `typer`, `pydantic`, `rich`.
 
 ---
 
-## 🦞 OpenClaw Integration
+## Use Cases
 
-This fork is fully adapted for [OpenClaw](https://openclaw.ai) as the **default agent backend**. OpenClaw agents can use ClawTeam through natural language via the included skill.
+### 1. Autonomous ML Research — 8 Agents x 8 GPUs
 
-### What ClawTeam Brings to OpenClaw
-
-Without ClawTeam, each OpenClaw agent works in isolation — no collaboration, no shared tasks, no parallel development. ClawTeam transforms OpenClaw from a **single-agent tool** into a **multi-agent autonomous platform**.
-
-| Capability | OpenClaw Alone | OpenClaw + ClawTeam |
-|-----------|---------------|-------------------|
-| **Task assignment** | AGI manually messages each agent | Leader agent autonomously splits, assigns, and monitors |
-| **Parallel development** | Impossible — agents share the same working directory | Each agent gets its own git worktree, true parallel coding |
-| **Dependency management** | Manual polling of JSON files | `--blocked-by` with automatic unblocking on completion |
-| **Inter-agent communication** | Only through AGI relay | Direct point-to-point inbox + broadcast |
-| **Observability** | Read logs and guess status | Kanban board + tmux tiled view of all agents working |
-| **Startup complexity** | Write dispatch scripts + multiple sessions_send | One command: `clawteam launch hedge-fund` |
-| **Cost tracking** | None | Per-agent token usage, cost, and budget management |
-| **Scaling** | Modify config + routing for each new agent | `clawteam spawn` to add workers on the fly |
-
-**Example — "Build a full-stack app with auth":**
+Based on [@karpathy/autoresearch](https://github.com/karpathy/autoresearch). One prompt launches 8 research agents across H100s that design 2000+ experiments autonomously.
 
 ```
-User → "Build a full-stack app with auth"
-OpenClaw AGI → activates clawteam skill
-  → Creates 5-agent team (architect + 2 backend + frontend + tester)
-  → Each agent works in its own git branch in parallel
-  → Dependencies auto-managed (architecture done → backend unlocks → tests unlock)
-  → All branches merged when complete
+Human: "Use 8 GPUs to optimize train.py. Read program.md for instructions."
+
+Leader agent:
+├── Spawns 8 agents, each assigned a research direction (depth, width, LR, batch size...)
+├── Each agent gets its own git worktree for isolated experiments
+├── Every 30 min: checks results, cross-pollinates best configs to new agents
+├── Reassigns GPUs as agents finish — fresh agents start from best known config
+└── Result: val_bpb 1.044 → 0.977 (6.4% improvement) across 2430 experiments in ~30 GPU-hours
 ```
 
-**Example — "Analyze NVDA, AAPL, MSFT for investment":**
+<p align="center">
+  <img src="assets/autoresearch-progress.png" alt="AutoResearch Progress" width="720">
+</p>
+
+Full results: [novix-science/autoresearch](https://github.com/novix-science/autoresearch)
+
+### 2. Agentic Software Engineering
 
 ```
-User → "Analyze these stocks"
-OpenClaw AGI → clawteam launch hedge-fund
-  → 7 agents work simultaneously (value/growth/technical/fundamentals/sentiment + risk + portfolio manager)
-  → All analysts run in parallel
-  → Risk manager auto-unblocks when all signals arrive
-  → Portfolio manager synthesizes final recommendation
+Human: "Build a full-stack todo app with auth, database, and React frontend."
+
+Leader agent:
+├── Creates tasks with dependency chains (API schema → auth + DB → frontend → tests)
+├── Spawns 5 agents (architect, 2 backend, frontend, tester) in separate worktrees
+├── Dependencies auto-resolve: architect completes → backend unblocks → tester unblocks
+├── Agents coordinate via inbox: "Here's the OpenAPI spec", "Auth endpoints ready"
+└── Leader merges all worktrees into main when complete
 ```
 
-### Setup for OpenClaw
+### 3. AI Hedge Fund — Template Launch
 
-#### Option A: One-Command Install (Recommended)
+A TOML template spawns a complete 7-agent investment team with one command:
 
 ```bash
-git clone https://github.com/win4r/ClawTeam-OpenClaw.git
-cd ClawTeam-OpenClaw
-bash scripts/install-openclaw.sh
+clawteam launch hedge-fund --team fund1 --goal "Analyze AAPL, MSFT, NVDA for Q2 2026"
 ```
 
-The install script automatically:
-- Checks dependencies (Python 3.10+, tmux, OpenClaw)
-- Installs ClawTeam via pip
-- Creates `~/bin/clawteam` symlink (fixes PATH issues with OpenClaw agents)
-- Copies the OpenClaw skill to `~/.openclaw/workspace/skills/clawteam/`
-- Verifies everything works
+5 analyst agents (value, growth, technical, fundamentals, sentiment) work in parallel. Risk manager synthesizes all signals. Portfolio manager makes final decisions.
 
-#### Option B: Manual Install
-
-```bash
-# 1. Install ClawTeam
-pip install clawteam
-# Or from this repo:
-git clone https://github.com/win4r/ClawTeam-OpenClaw.git && cd ClawTeam-OpenClaw && pip install -e .
-
-# 2. Make clawteam accessible to OpenClaw agents (fixes PATH issue)
-mkdir -p ~/bin
-ln -sf $(python3 -c "import shutil; print(shutil.which('clawteam') or '/Library/Frameworks/Python.framework/Versions/3.11/bin/clawteam')") ~/bin/clawteam
-
-# 3. Install the OpenClaw skill (enables natural language usage)
-mkdir -p ~/.openclaw/workspace/skills/clawteam
-cp skills/openclaw/SKILL.md ~/.openclaw/workspace/skills/clawteam/SKILL.md
-
-# 4. Verify
-clawteam --version
-openclaw skills list | grep clawteam
-```
-
-### Natural Language Usage via OpenClaw Bot
-
-Once the skill is installed, you can talk to your OpenClaw bot in any channel (Telegram, Discord, TUI, etc.):
-
-| What you say | What happens |
-|-------------|-------------|
-| "Create a 5-agent team to build a web app" | Creates team, tasks, and spawns 5 openclaw agents in tmux |
-| "Launch a hedge-fund analysis team" | Runs `clawteam launch hedge-fund` with 7 agents |
-| "Check the status of my agent team" | Runs `clawteam board show` and reports kanban status |
-| "Broadcast to all agents: focus on auth module first" | Sends `clawteam inbox broadcast` |
-
-### How It Works with OpenClaw
-
-| Component | Behavior |
-|-----------|----------|
-| **Default spawn** | `clawteam spawn` launches `openclaw tui --message <prompt>` in tmux |
-| **Subprocess mode** | `clawteam spawn subprocess` launches `openclaw agent --message <prompt>` |
-| **Environment vars** | Supports `OPENCLAW_*` prefix (e.g. `OPENCLAW_AGENT_NAME`) alongside `CLAWTEAM_*` |
-| **Templates** | All built-in templates (hedge-fund, code-review, research-paper) use `openclaw` |
-| **Skill** | `skills/openclaw/SKILL.md` teaches OpenClaw the full ClawTeam CLI |
-| **Command validation** | Pre-validates agent commands before launch; clear error on missing CLI |
-| **Spawn rollback** | Failed spawns auto-remove the registered member and clean up worktrees |
-| **Concurrent safety** | Task store uses `fcntl` file locking — safe for parallel agent access |
-
-### OpenClaw + ClawTeam Architecture
-
-```
-  You (Telegram/Discord/TUI)
-         │
-         ▼
-  ┌──────────────────┐
-  │  OpenClaw Gateway │  ← recognizes "clawteam" skill
-  └────────┬─────────┘
-           │
-           ▼
-  ┌──────────────────┐     clawteam spawn     ┌────────────────────┐
-  │ 🦞 Leader Agent  │ ───────────────────►   │ 🤖 openclaw tui    │
-  │ (openclaw)       │ ───┐                   │ (tmux window)      │
-  │                  │    │                   │ git worktree       │
-  │ Uses clawteam    │    │                   └────────────────────┘
-  │ CLI to manage    │    │
-  │ the swarm        │    ▼                   ┌────────────────────┐
-  └──────────────────┘ ──────────────────►    │ 🤖 openclaw tui    │
-                          │                   │ (tmux window)      │
-                          ▼                   │ git worktree       │
-                    ┌────────────────────┐    └────────────────────┘
-                    │ 🤖 openclaw tui    │
-                    │ (tmux window)      │    All agents coordinate via:
-                    │ git worktree       │    ~/.clawteam/ (tasks, inboxes)
-                    └────────────────────┘
-```
+Templates are TOML files — **create your own** for any domain.
 
 ---
 
-## 🚀 Quick Start
-
-### ⚡ Option 1: Let the Agent Drive (Recommended)
-
-ClawTeam ships with agent skills that auto-activate. Just install and prompt your agent:
-
-**With OpenClaw** (default):
-```
-"Build a web app. Use clawteam to split the work across multiple agents."
-```
-
-**With Claude Code**:
-```
-"Build a web app. Use clawteam to split the work across multiple agents."
-```
-
-The agent will automatically create a team, spawn workers, assign tasks, and coordinate — using `clawteam` CLI commands under the hood.
-
-### 🔧 Option 2: Drive It Manually
-
-```bash
-# 1. Create a team (you become the leader)
-clawteam team spawn-team my-team -d "Build the auth module" -n leader
-
-# 2. Spawn worker agents — each gets a git worktree, tmux window, and identity
-clawteam spawn --team my-team --agent-name alice --task "Implement the OAuth2 flow"
-clawteam spawn --team my-team --agent-name bob   --task "Write unit tests for auth"
-
-# 3. Workers auto-receive a coordination prompt that teaches them to:
-#    ✅ Check tasks:    clawteam task list my-team --owner alice
-#    ✅ Update status:  clawteam task update my-team <id> --status completed
-#    ✅ Message leader: clawteam inbox send my-team leader "Done!"
-#    ✅ Report idle:    clawteam lifecycle idle my-team
-
-# 4. Watch them work side-by-side
-clawteam board attach my-team
-```
-
-### 🤖 Supported Agents
-
-ClawTeam works with **any CLI agent** that can execute shell commands:
-
-| Agent | Spawn Command | Status |
-|-------|--------------|--------|
-| [OpenClaw](https://openclaw.ai) | `clawteam spawn tmux openclaw --team ...` | ✅ **Default** — first-class support |
-| [Claude Code](https://claude.ai/claude-code) | `clawteam spawn tmux claude --team ...` | ✅ Full support |
-| [Codex](https://openai.com/codex) | `clawteam spawn tmux codex --team ...` | ✅ Full support |
-| [nanobot](https://github.com/HKUDS/nanobot) | `clawteam spawn tmux nanobot --team ...` | ✅ Full support |
-| [Cursor](https://cursor.com) | `clawteam spawn subprocess cursor --team ...` | 🔮 Experimental |
-| Custom scripts | `clawteam spawn subprocess python --team ...` | ✅ Full support |
-
----
-
-## ✨ Features
+## Features
 
 <table>
 <tr>
 <td width="50%">
 
-### 🦞 Agent Self-Organization
-- Leader agents spawn and manage worker agents
-- **Auto-injected coordination prompt** — zero manual setup
-- Workers self-report status, results, and idle state
-- Works with any CLI agent: Claude Code, Codex, OpenClaw, custom
+### Agent Self-Organization
+- Leader spawns and manages workers
+- Auto-injected coordination prompt — zero manual setup
+- Workers self-report status and idle state
+- Any CLI agent can participate
 
-### 🌳 Workspace Isolation
-- Each agent gets its own **git worktree** (separate branch)
+### Workspace Isolation
+- Each agent gets its own **git worktree**
 - No merge conflicts between parallel agents
 - Checkpoint, merge, and cleanup commands
 - Branch naming: `clawteam/{team}/{agent}`
 
-### 📋 Task Tracking with Dependencies
+### Task Tracking with Dependencies
 - Shared kanban: `pending` → `in_progress` → `completed` / `blocked`
-- `--blocked-by` dependency chains — **auto-unblock on completion**
+- `--blocked-by` chains with auto-unblock on completion
 - `task wait` blocks until all tasks complete
-- Filter by status, owner; JSON output for scripting
 
 </td>
 <td width="50%">
 
-### 💬 Inter-Agent Messaging
-- Point-to-point **inboxes** (send, receive, peek)
-- **Broadcast** to all team members
-- File-based (default) or ZeroMQ P2P transport with offline fallback
-- Agents discover messages via `inbox receive`
+### Inter-Agent Messaging
+- Point-to-point inboxes (send, receive, peek)
+- Broadcast to all team members
+- File-based (default) or ZeroMQ P2P transport
 
-### 📊 Monitoring & Dashboards
-- `board show` — terminal kanban board
+### Monitoring & Dashboards
+- `board show` — terminal kanban
 - `board live` — auto-refreshing dashboard
-- `board attach` — **tiled tmux view** of all agents working
-- `board serve` — **Web UI** with real-time updates
+- `board attach` — tiled tmux view of all agents
+- `board serve` — Web UI with real-time updates
 
-### 🎪 Team Templates
-- **TOML files** define team archetypes (roles, tasks, prompts)
-- One command launches a complete team: `clawteam launch <template>`
-- Built-in: AI Hedge Fund (7 agents). Create your own.
+### Team Templates
+- TOML files define team archetypes (roles, tasks, prompts)
+- One command: `clawteam launch <template>`
 - Variable substitution: `{goal}`, `{team_name}`, `{agent_name}`
 
 </td>
 </tr>
 </table>
 
-### 🔧 More
-
-| Feature | Description |
-|---------|-------------|
-| 📝 **Plan Approval** | Agents submit plans for leader review before execution (team-scoped storage) |
-| 🔄 **Lifecycle Protocol** | Graceful shutdown request/approve/reject, idle notifications |
-| 📊 **JSON Output** | `--json` flag on all commands — agents parse structured output |
-| 🌐 **Cross-Machine** | Shared filesystem (NFS/SSHFS) or P2P transport for distributed teams |
-| 👥 **Multi-User** | Namespace agents by user — multiple humans can share a team |
-| ⚙️ **Configuration** | Persistent config: env var > config file > default priority |
-| 🔌 **Agent Skills** | OpenClaw skill + Claude Code skill — auto-triggers on multi-agent requests |
-| 🛡️ **Spawn Validation** | Pre-validates agent commands before launch; auto-rolls back on failure |
-| 🔒 **Concurrent Safety** | File locking on task writes prevents race conditions in multi-agent environments |
-| 🤝 **Workspace Trust** | Auto-confirms Claude Code / Codex workspace trust prompts in fresh worktrees |
+**Also:** plan approval workflows, graceful lifecycle management, `--json` output on all commands, cross-machine support (NFS/SSHFS or P2P), multi-user namespacing, spawn validation with auto-rollback, `fcntl` file locking for concurrent safety.
 
 ---
 
-## 🤖 How Agents Use ClawTeam
+## OpenClaw Integration
 
-When an agent is spawned via `clawteam spawn`, it receives an **auto-injected coordination prompt**:
+This fork makes [OpenClaw](https://openclaw.ai) the **default agent**. Without ClawTeam, each OpenClaw agent works in isolation. ClawTeam transforms it into a multi-agent platform.
+
+| Capability | OpenClaw Alone | OpenClaw + ClawTeam |
+|-----------|---------------|-------------------|
+| **Task assignment** | Manual per-agent messaging | Leader autonomously splits, assigns, monitors |
+| **Parallel development** | Shared working directory | Isolated git worktrees per agent |
+| **Dependencies** | Manual polling | `--blocked-by` with auto-unblock |
+| **Communication** | Only through AGI relay | Direct point-to-point inbox + broadcast |
+| **Observability** | Read logs | Kanban board + tiled tmux view |
+
+Once the skill is installed, talk to your OpenClaw bot in any channel:
+
+| What you say | What happens |
+|-------------|-------------|
+| "Create a 5-agent team to build a web app" | Creates team, tasks, spawns 5 agents in tmux |
+| "Launch a hedge-fund analysis team" | `clawteam launch hedge-fund` with 7 agents |
+| "Check the status of my agent team" | `clawteam board show` with kanban output |
 
 ```
-## Coordination Protocol (auto-injected into every spawned agent)
-
-- 📋 Check your tasks: clawteam task list <team> --owner <your-name>
-- ▶️ Start a task:     clawteam task update <team> <id> --status in_progress
-- ✅ Finish a task:    clawteam task update <team> <id> --status completed
-- 💬 Message leader:   clawteam inbox send <team> leader "status update..."
-- 💬 Message teammate: clawteam inbox send <team> <name> "info..."
-- 📨 Check inbox:      clawteam inbox receive <team>
-- 😴 Report idle:      clawteam lifecycle idle <team>
+  You (Telegram/Discord/TUI)
+         │
+         ▼
+  ┌──────────────────┐
+  │  OpenClaw Gateway │  ← activates clawteam skill
+  └────────┬─────────┘
+           │
+           ▼
+  ┌──────────────────┐     clawteam spawn     ┌─────────────────┐
+  │  Leader Agent    │ ─────────────────────► │  openclaw tui   │
+  │  (openclaw)      │ ──┐                    │  (tmux window)  │
+  │                  │   │                    │  git worktree   │
+  │  Manages swarm   │   ├──────────────────► ├─────────────────┤
+  │  via clawteam    │   │                    │  openclaw tui   │
+  │  CLI             │   ├──────────────────► ├─────────────────┤
+  └──────────────────┘   │                    │  openclaw tui   │
+                         └──────────────────► └─────────────────┘
+                                               All coordinate via
+                                               ~/.clawteam/ (tasks, inboxes)
 ```
-
-This means **any CLI agent** can participate in a ClawTeam team — it just needs to run shell commands. No custom SDK, no API integration, no framework lock-in.
 
 ---
 
-## 📖 Command Reference
+## Architecture
+
+```
+  Human: "Optimize this LLM"
+         │
+         ▼
+  ┌──────────────┐     clawteam spawn     ┌──────────────┐
+  │  Leader      │ ──────────────────────► │  Worker      │
+  │  (any agent) │ ──────┐                │  git worktree │
+  │              │       ├──────────────► │  tmux window  │
+  │  spawn       │       │                ├──────────────┤
+  │  task create │       ├──────────────► │  Worker      │
+  │  inbox send  │       │                │  git worktree │
+  │  board show  │       └──────────────► │  tmux window  │
+  └──────────────┘                        └──────────────┘
+                                                 │
+                                                 ▼
+                                      ┌─────────────────────┐
+                                      │    ~/.clawteam/     │
+                                      │ ├── teams/   (who) │
+                                      │ ├── tasks/   (what)│
+                                      │ ├── inboxes/ (talk)│
+                                      │ └── workspaces/    │
+                                      └─────────────────────┘
+```
+
+All state lives in `~/.clawteam/` as JSON files. No database, no server. Atomic writes with `fcntl` file locking ensure crash safety.
+
+| Setting | Env Var | Default |
+|---------|---------|---------|
+| Data directory | `CLAWTEAM_DATA_DIR` | `~/.clawteam` |
+| Transport | `CLAWTEAM_TRANSPORT` | `file` |
+| Workspace mode | `CLAWTEAM_WORKSPACE` | `auto` |
+| Spawn backend | `CLAWTEAM_DEFAULT_BACKEND` | `tmux` |
+
+---
+
+## Command Reference
 
 <details open>
-<summary><h3>🔧 Core Commands</h3></summary>
+<summary><strong>Core Commands</strong></summary>
 
 ```bash
-# 🏗️ Team lifecycle
+# Team lifecycle
 clawteam team spawn-team <team> -d "description" -n <leader>
 clawteam team discover                    # List all teams
 clawteam team status <team>               # Show members
 clawteam team cleanup <team> --force      # Delete team
 
-# 🚀 Spawn agents
+# Spawn agents
 clawteam spawn --team <team> --agent-name <name> --task "do this"
 clawteam spawn tmux codex --team <team> --agent-name <name> --task "do this"
 
-# 📋 Task management
+# Task management
 clawteam task create <team> "subject" -o <owner> --blocked-by <id1>,<id2>
 clawteam task update <team> <id> --status completed   # auto-unblocks dependents
 clawteam task list <team> --status blocked --owner worker1
 clawteam task wait <team> --timeout 300
 
-# 💬 Messaging
+# Messaging
 clawteam inbox send <team> <to> "message"
 clawteam inbox broadcast <team> "message"
 clawteam inbox receive <team>             # consume messages
 clawteam inbox peek <team>                # read without consuming
 
-# 📊 Monitoring
+# Monitoring
 clawteam board show <team>                # terminal kanban
 clawteam board live <team> --interval 3   # auto-refresh
 clawteam board attach <team>              # tiled tmux view
@@ -672,159 +387,82 @@ clawteam board serve --port 8080          # web UI
 </details>
 
 <details>
-<summary><h3>🌳 Workspace, 📝 Plan, 🔄 Lifecycle, ⚙️ Config</h3></summary>
+<summary><strong>Workspace, Plan, Lifecycle, Config</strong></summary>
 
 ```bash
-# 🌳 Workspace (git worktree management)
+# Workspace (git worktree management)
 clawteam workspace list <team>
 clawteam workspace checkpoint <team> <agent>    # auto-commit
 clawteam workspace merge <team> <agent>         # merge back to main
 clawteam workspace cleanup <team> <agent>       # remove worktree
 
-# 📝 Plan approval
+# Plan approval
 clawteam plan submit <team> <agent> "plan" --summary "TL;DR"
 clawteam plan approve <team> <plan-id> <agent> --feedback "LGTM"
 clawteam plan reject <team> <plan-id> <agent> --feedback "Revise X"
 
-# 🔄 Lifecycle
+# Lifecycle
 clawteam lifecycle request-shutdown <team> <agent> --reason "done"
 clawteam lifecycle approve-shutdown <team> <request-id> <agent>
 clawteam lifecycle idle <team>
 
-# 🎪 Templates
+# Templates
 clawteam launch <template> --team <name> --goal "Build X"
 clawteam template list
 
-# ⚙️ Config
+# Config
 clawteam config show
 clawteam config set transport p2p
 clawteam config health
 ```
 
-| Setting | Env Var | Default | Description |
-|---------|---------|---------|-------------|
-| `data_dir` | `CLAWTEAM_DATA_DIR` | `~/.clawteam` | Data directory |
-| `transport` | `CLAWTEAM_TRANSPORT` | `file` | `file` or `p2p` |
-| `workspace` | `CLAWTEAM_WORKSPACE` | `auto` | `auto` / `always` / `never` |
-| `default_backend` | `CLAWTEAM_DEFAULT_BACKEND` | `tmux` | `tmux` or `subprocess` |
-| `skip_permissions` | `CLAWTEAM_SKIP_PERMISSIONS` | `true` | Auto-approve agent tools |
-
 </details>
 
 ---
 
-## 🏗️ Architecture
+## Roadmap
 
-```
-  Human: "Optimize this LLM"
-         │
-         ▼
-  ┌──────────────┐     clawteam spawn     ┌──────────────┐
-  │ 🦞 Leader    │ ──────────────────────► │ 🤖 Worker    │
-  │ (Claude Code)│ ──────┐                │ (Claude Code)│
-  │              │       │                │ git worktree │
-  │ Uses:        │       │                │ tmux window  │
-  │ • spawn      │       │ clawteam spawn └──────────────┘
-  │ • task create│       │
-  │ • inbox send │       ▼                ┌──────────────┐
-  │ • board show │ ──────────────────────► │ 🤖 Worker    │
-  │ • task wait  │       │                │ (Codex)      │
-  └──────────────┘       │                │ git worktree │
-                         │                │ tmux window  │
-                         │ clawteam spawn └──────────────┘
-                         ▼
-                   ┌──────────────┐
-                   │ 🤖 Worker    │    Each worker uses:
-                   │ (any CLI)    │    • task list (check work)
-                   │ git worktree │    • task update (report done)
-                   │ tmux window  │    • inbox send (message leader)
-                   └──────────────┘    • inbox receive (get instructions)
-                         │
-                         ▼
-              ┌─────────────────────┐
-              │    ~/.clawteam/     │
-              │ ├── teams/   (who) │
-              │ ├── tasks/   (what)│
-              │ ├── inboxes/ (talk)│
-              │ └── workspaces/    │
-              │     (isolated code)│
-              └─────────────────────┘
-```
-
-All state lives in `~/.clawteam/` as JSON files. No database, no server, no cloud. Atomic `tmp + rename` writes with `fcntl` file locking ensure crash safety and concurrent access from multiple agents.
-
-| Spawn Default | Value | Override |
-|---------------|-------|----------|
-| Backend | `tmux` | `clawteam spawn subprocess ...` |
-| Command | `openclaw` | `clawteam spawn tmux claude ...` |
-| Workspace | `auto` (git worktree) | `--no-workspace` |
-| Permissions | skip | `--no-skip-permissions` |
-
-| Transport | How it works | When to use |
-|-----------|-------------|-------------|
-| **file** (default) | JSON files in inbox dirs | Single machine, shared FS |
-| **p2p** | ZeroMQ PUSH/PULL + file fallback | Low-latency, auto-fallback |
+| Version | What | Status |
+|---------|------|--------|
+| v0.3 | File + P2P transport, Web UI, multi-user, templates | Shipped |
+| v0.4 | Redis transport — cross-machine messaging | Planned |
+| v0.5 | Shared state layer — team config across machines | Planned |
+| v0.6 | Agent marketplace — community templates | Exploring |
+| v0.7 | Adaptive scheduling — dynamic task reassignment | Exploring |
+| v1.0 | Production-grade — auth, permissions, audit logs | Exploring |
 
 ---
 
-## 🗺️ Roadmap
+## Contributing
 
-| Phase | Version | What | Status |
-|-------|---------|------|--------|
-| **Current** | v0.3 | File + P2P (ZeroMQ) transport, Web UI, multi-user, team templates | ✅ Shipped |
-| **Phase 1** | v0.4 | Redis Transport — cross-machine messaging | 🔜 Planned |
-| **Phase 2** | v0.5 | Shared State Layer — team config and tasks across machines | 🔜 Planned |
-| **Phase 3** | v0.6 | Agent Marketplace — discover and reuse community agent templates | 💡 Exploring |
-| **Phase 4** | v0.7 | Adaptive Scheduling — dynamically reassign tasks based on agent performance | 💡 Exploring |
-| **Phase 5** | v1.0 | Production-grade — auth, permissions, audit logs | 💡 Exploring |
+We welcome contributions:
 
----
-
-## 🤝 Contributing
-
-We welcome contributions! ClawTeam is designed to be extensible:
-
-- 🤖 **New agent integrations** — Add support for more AI coding agents
-- 🎪 **Team templates** — Create TOML templates for new domains (DevOps, data science, etc.)
-- 🔌 **Transport backends** — Redis, NATS, or other message transports
-- 📊 **Dashboard improvements** — Enhanced Web UI, Grafana integration
-- 📖 **Documentation** — Tutorials, best practices, agent prompt engineering guides
+- **Agent integrations** — support for more CLI agents
+- **Team templates** — TOML templates for new domains
+- **Transport backends** — Redis, NATS, etc.
+- **Dashboard improvements** — Web UI, Grafana
+- **Documentation** — tutorials and best practices
 
 ---
 
-## 📖 Acknowledgements
+## Acknowledgements
 
-- [@karpathy/autoresearch](https://github.com/karpathy/autoresearch) — the autonomous ML research framework used in our 8-agent swarm demo
-- [OpenClaw](https://openclaw.ai) — the default agent backend for this fork, with first-class TUI and agent mode support
-- [Claude Code](https://claude.ai/claude-code) and [Codex](https://openai.com/codex) — AI coding agents that work as ClawTeam team members
-- [ai-hedge-fund](https://github.com/virattt/ai-hedge-fund) — inspiration for the multi-analyst hedge fund template
-- [CLI-Anything](https://github.com/HKUDS/CLI-Anything) — sister project making all software agent-native
+- [@karpathy/autoresearch](https://github.com/karpathy/autoresearch) — autonomous ML research framework
+- [OpenClaw](https://openclaw.ai) — default agent backend
+- [Claude Code](https://claude.ai/claude-code) and [Codex](https://openai.com/codex) — supported AI coding agents
+- [ai-hedge-fund](https://github.com/virattt/ai-hedge-fund) — hedge fund template inspiration
+- [CLI-Anything](https://github.com/HKUDS/CLI-Anything) — sister project
 
----
+## License
 
-## ⭐ Star History
-
-If you find ClawTeam helpful, please consider to give us a star! ⭐
-
-## 📄 License
-
-MIT License — free to use, modify, and distribute.
+MIT — free to use, modify, and distribute.
 
 ---
 
 <div align="center">
 
-**ClawTeam** — *Agent Swarm Intelligence.* 🦞
-
-<sub>8 agents × 8 H100s × 2430 experiments × one CLI × one swarm</sub>
-
-<br>
+**ClawTeam** — *Agent Swarm Intelligence.*
 
 <img src="assets/icon.png" alt="ClawTeam" width="80">
 
 </div>
-
-<p align="center">
-  <em>Thanks for visiting ✨ ClawTeam!</em><br><br>
-  <img src="https://visitor-badge.laobi.icu/badge?page_id=HKUDS.ClawTeam&style=for-the-badge&color=00d4ff" alt="Views">
-</p>
