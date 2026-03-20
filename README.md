@@ -149,16 +149,12 @@ openclaw --version  # Or: claude --version / codex --version
 
 ### Step 2: Install ClawTeam
 
+> **Important:** Do not use `pip install clawteam` — that installs the upstream version from PyPI, which defaults to `claude` and lacks the OpenClaw adaptations. Always install from this repo.
+
 ```bash
 git clone https://github.com/win4r/ClawTeam-OpenClaw.git
 cd ClawTeam-OpenClaw
 pip install -e .
-```
-
-Or from upstream PyPI (generic version, defaults to `claude` instead of `openclaw`):
-
-```bash
-pip install clawteam
 ```
 
 Optional — P2P transport (ZeroMQ):
