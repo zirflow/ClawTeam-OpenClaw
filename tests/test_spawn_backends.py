@@ -56,6 +56,63 @@ def test_subprocess_backend_prepends_current_clawteam_bin_to_path(monkeypatch, t
     assert env["CLAWTEAM_BIN"] == str(clawteam_bin)
 
 
+def test_subprocess_backend_discards_output_and_preserves_exit_hook_and_registry(
+    monkeypatch, tmp_path
+):
+    monkeypatch.setenv("PATH", "/usr/bin:/bin")
+    clawteam_bin = tmp_path / "venv" / "bin" / "clawteam"
+    clawteam_bin.parent.mkdir(parents=True)
+    clawteam_bin.write_text("#!/bin/sh\n")
+    monkeypatch.setattr(sys, "argv", [str(clawteam_bin)])
+
+    captured: dict[str, object] = {}
+    registered: dict[str, object] = {}
+
+    def fake_popen(cmd, **kwargs):
+        captured["cmd"] = cmd
+        captured["stdout"] = kwargs["stdout"]
+        captured["stderr"] = kwargs["stderr"]
+        captured["cwd"] = kwargs["cwd"]
+        return DummyProcess(pid=9876)
+
+    def fake_register_agent(**kwargs):
+        registered.update(kwargs)
+
+    monkeypatch.setattr(
+        "clawteam.spawn.command_validation.shutil.which",
+        lambda name, path=None: "/usr/bin/codex" if name == "codex" else None,
+    )
+    monkeypatch.setattr("clawteam.spawn.subprocess_backend.subprocess.Popen", fake_popen)
+    monkeypatch.setattr("clawteam.spawn.registry.register_agent", fake_register_agent)
+
+    backend = SubprocessBackend()
+    result = backend.spawn(
+        command=["codex"],
+        agent_name="worker1",
+        agent_id="agent-1",
+        agent_type="general-purpose",
+        team_name="demo-team",
+        prompt="do work",
+        cwd="/tmp/demo",
+        skip_permissions=True,
+    )
+
+    assert result == "Agent 'worker1' spawned as subprocess (pid=9876)"
+    assert captured["stdout"] is subprocess.DEVNULL
+    assert captured["stderr"] is subprocess.DEVNULL
+    assert captured["cwd"] == "/tmp/demo"
+    assert (
+        f"{clawteam_bin} lifecycle on-exit --team demo-team --agent worker1" in captured["cmd"]
+    )
+    assert registered == {
+        "team_name": "demo-team",
+        "agent_name": "worker1",
+        "backend": "subprocess",
+        "pid": 9876,
+        "command": ["codex", "--dangerously-bypass-approvals-and-sandbox", "do work"],
+    }
+
+
 def test_tmux_backend_exports_spawn_path_for_agent_commands(monkeypatch, tmp_path):
     monkeypatch.setenv("PATH", "/usr/bin:/bin")
     clawteam_bin = tmp_path / "venv" / "bin" / "clawteam"

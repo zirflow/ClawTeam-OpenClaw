@@ -109,8 +109,9 @@ class SubprocessBackend(SpawnBackend):
             shell_cmd,
             shell=True,
             env=spawn_env,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            # Subprocess agents are fire-and-forget; unread pipes can block long-lived runs.
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
             cwd=cwd,
         )
         self._processes[agent_name] = process
