@@ -1,5 +1,7 @@
 """Tests for clawteam.team.costs — CostStore report/list/summary."""
 
+from pathlib import Path
+
 from clawteam.team.costs import CostEvent, CostStore, CostSummary
 
 
@@ -84,6 +86,32 @@ class TestCostStoreSummary:
         assert summary.event_count == 3
         assert summary.by_agent["a1"] == 4.0
         assert summary.by_agent["a2"] == 2.0
+
+    def test_summary_uses_cached_totals_without_rereading_event_files(
+        self, team_name, monkeypatch
+    ):
+        store = CostStore(team_name)
+        store.report(agent_name="a1", input_tokens=100, output_tokens=50, cost_cents=1.0)
+        store.report(agent_name="a2", input_tokens=200, output_tokens=100, cost_cents=2.0)
+
+        event_payload_reads: list[str] = []
+        original_read_text = Path.read_text
+
+        def tracked_read_text(path: Path, *args, **kwargs):
+            if path.name.startswith("cost-") and path.suffix == ".json":
+                event_payload_reads.append(path.name)
+            return original_read_text(path, *args, **kwargs)
+
+        monkeypatch.setattr(Path, "read_text", tracked_read_text)
+
+        summary = CostStore(team_name).summary()
+
+        assert summary.total_cost_cents == 3.0
+        assert summary.total_input_tokens == 300
+        assert summary.total_output_tokens == 150
+        assert summary.event_count == 2
+        assert summary.by_agent == {"a1": 1.0, "a2": 2.0}
+        assert event_payload_reads == []
 
 
 class TestCostSummaryModel:
