@@ -34,6 +34,7 @@ def build_agent_prompt(
     user: str = "",
     workspace_dir: str = "",
     workspace_branch: str = "",
+    isolated_workspace: bool = False,
     repo_path: str | None = None,
 ) -> str:
     """Build agent prompt: identity + task + context + coordination."""
@@ -54,9 +55,14 @@ def build_agent_prompt(
             "",
             "## Workspace",
             f"- Working directory: {workspace_dir}",
-            f"- Branch: {workspace_branch}",
-            "- This is an isolated git worktree. Your changes do not affect the main branch.",
         ])
+        if isolated_workspace:
+            lines.extend([
+                f"- Branch: {workspace_branch}",
+                "- This is an isolated git worktree. Your changes do not affect the main branch.",
+            ])
+        else:
+            lines.append("- Work directly in this repository path unless told otherwise.")
 
     lines.extend([
         "",
@@ -78,7 +84,7 @@ def build_agent_prompt(
         "## Coordination Protocol\n",
         f"- Use `clawteam task list {team_name} --owner {agent_name}` to see your tasks.",
         f"- Starting a task: `clawteam task update {team_name} <task-id> --status in_progress`",
-        "- Before marking a task completed, commit your changes in this worktree with git.",
+        "- Before marking a task completed, commit your changes in this repository with git.",
         '- Use a clear commit message, e.g. `git add -A && git commit -m "Implement <task summary>"`.',
         f"- Finishing a task: `clawteam task update {team_name} <task-id> --status completed`",
         "- When you finish all tasks, send a summary to the leader:",

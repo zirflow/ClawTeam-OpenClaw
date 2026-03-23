@@ -176,6 +176,7 @@ def test_tmux_backend_exports_spawn_path_for_agent_commands(monkeypatch, tmp_pat
     assert f"export CLAWTEAM_BIN={clawteam_bin}" in full_cmd
     assert "export CLAWTEAM_DATA_DIR=/tmp/clawteam-data" in full_cmd
     assert "export GOOGLE_CLOUD_PROJECT=demo-project" in full_cmd
+    assert "cd /tmp/demo &&" in full_cmd
     assert f"{clawteam_bin} lifecycle on-exit --team demo-team --agent worker1" in full_cmd
 
 

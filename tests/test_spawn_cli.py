@@ -287,3 +287,45 @@ def test_spawn_cli_replace_stops_running_agent_before_respawn(monkeypatch, tmp_p
     assert result.exit_code == 0
     assert stop_calls == [("demo", "alice")]
     assert backend.calls
+
+
+def test_spawn_cli_passes_repo_as_cwd_without_worktree_and_uses_repo_prompt(monkeypatch, tmp_path):
+    monkeypatch.setenv("CLAWTEAM_DATA_DIR", str(tmp_path))
+    TeamManager.create_team(
+        name="demo",
+        leader_name="leader",
+        leader_id="leader001",
+    )
+    backend = RecordingBackend()
+    monkeypatch.setattr("clawteam.spawn.get_backend", lambda _: backend)
+
+    repo_path = tmp_path / "frontend"
+    repo_path.mkdir()
+
+    runner = CliRunner()
+    result = runner.invoke(
+        app,
+        [
+            "spawn",
+            "tmux",
+            "claude",
+            "--team",
+            "demo",
+            "--agent-name",
+            "alice",
+            "--no-workspace",
+            "--repo",
+            str(repo_path),
+            "--task",
+            "Work on frontend",
+        ],
+        env={"CLAWTEAM_DATA_DIR": str(tmp_path)},
+    )
+
+    assert result.exit_code == 0
+    assert len(backend.calls) == 1
+    call = backend.calls[0]
+    assert call["cwd"] == str(repo_path.resolve())
+    assert "Working directory: " + str(repo_path.resolve()) in call["prompt"]
+    assert "Work directly in this repository path" in call["prompt"]
+    assert "isolated git worktree" not in call["prompt"]

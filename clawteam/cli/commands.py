@@ -2772,6 +2772,7 @@ def spawn_agent(
             user=user_name,
             workspace_dir=cwd or "",
             workspace_branch=ws_branch,
+            isolated_workspace=bool(workspace and cwd),
             repo_path=repo,
         )
 
@@ -3631,6 +3632,7 @@ def launch_team(
             user=_os.environ.get("CLAWTEAM_USER", ""),
             workspace_dir=cwd or "",
             workspace_branch=ws_branch,
+            isolated_workspace=bool(cwd),
         )
 
         result = be.spawn(

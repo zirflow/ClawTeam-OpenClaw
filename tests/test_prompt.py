@@ -54,11 +54,24 @@ class TestBuildAgentPrompt:
             agent_name="w", agent_id="id", agent_type="t",
             team_name="team", leader_name="lead", task="task",
             workspace_dir="/tmp/ws", workspace_branch="feature-x",
+            isolated_workspace=True,
         )
         assert "/tmp/ws" in prompt
         assert "feature-x" in prompt
         assert "Workspace" in prompt
         assert "isolated git worktree" in prompt
+
+    def test_prompt_for_plain_repo_path_is_not_described_as_worktree(self):
+        prompt = build_agent_prompt(
+            agent_name="w", agent_id="id", agent_type="t",
+            team_name="team", leader_name="lead", task="task",
+            workspace_dir="/tmp/repo",
+            isolated_workspace=False,
+        )
+        assert "/tmp/repo" in prompt
+        assert "Work directly in this repository path" in prompt
+        assert "isolated git worktree" not in prompt
+        assert "Branch:" not in prompt
 
     def test_prompt_excludes_workspace_when_empty(self):
         prompt = build_agent_prompt(
@@ -76,3 +89,4 @@ class TestBuildAgentPrompt:
         assert "clawteam task list my-team --owner dev" in prompt
         assert "clawteam inbox send my-team boss" in prompt
         assert "clawteam cost report my-team" in prompt
+        assert "commit your changes in this repository with git" in prompt
