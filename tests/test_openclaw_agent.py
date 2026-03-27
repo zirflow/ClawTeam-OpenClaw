@@ -101,40 +101,18 @@ def test_tmux_backend_excludes_agent_flag_when_not_set(monkeypatch):
 # SubprocessBackend tests
 # ---------------------------------------------------------------------------
 
-def test_subprocess_backend_does_not_raise_with_openclaw_agent(monkeypatch, capsys):
-    """subprocess_backend.spawn() with openclaw_agent should not raise — just warn."""
+def test_subprocess_backend_raises_with_openclaw_agent(monkeypatch):
+    """subprocess_backend.spawn() with openclaw_agent should raise NotImplementedError."""
+    import pytest
     from clawteam.spawn.subprocess_backend import SubprocessBackend
 
-    class FakeProcess:
-        pid = 9999
-
-        def poll(self):
-            return None
-
-    monkeypatch.setattr(
-        "clawteam.spawn.command_validation.shutil.which",
-        lambda name, path=None: f"/usr/bin/{name}",
-    )
-    monkeypatch.setattr(
-        "clawteam.spawn.subprocess_backend.subprocess.Popen",
-        lambda *a, **kw: FakeProcess(),
-    )
-    monkeypatch.setattr("clawteam.spawn.registry.register_agent", lambda **_: None)
-
     backend = SubprocessBackend()
-    # Should not raise; warning goes to stderr
-    result = backend.spawn(
-        command=["codex"],
-        agent_name="worker",
-        agent_id="agent-3",
-        agent_type="general-purpose",
-        team_name="test-team",
-        openclaw_agent="researcher",
-    )
-
-    # No exception raised — result is a success message
-    assert "worker" in result
-
-    # Warning emitted to stderr
-    stderr_output = capsys.readouterr().err
-    assert "subprocess backend" in stderr_output.lower() or "does not support" in stderr_output.lower()
+    with pytest.raises(NotImplementedError, match="subprocess backend"):
+        backend.spawn(
+            command=["codex"],
+            agent_name="worker",
+            agent_id="agent-3",
+            agent_type="general-purpose",
+            team_name="test-team",
+            openclaw_agent="researcher",
+        )

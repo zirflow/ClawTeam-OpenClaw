@@ -5,7 +5,6 @@ from __future__ import annotations
 import os
 import shlex
 import subprocess
-import sys
 
 from clawteam.spawn.base import SpawnBackend
 from clawteam.spawn.cli_env import build_spawn_path, resolve_clawteam_executable
@@ -32,10 +31,9 @@ class SubprocessBackend(SpawnBackend):
         openclaw_agent: str | None = None,
     ) -> str:
         if openclaw_agent:
-            print(
-                "Warning: subprocess backend does not support --openclaw-agent "
-                f"(got {openclaw_agent!r}). The parameter will be ignored.",
-                file=sys.stderr,
+            raise NotImplementedError(
+                f"openclaw_agent is not supported with subprocess backend "
+                f"(got {openclaw_agent!r}); use tmux backend instead."
             )
 
         spawn_env = os.environ.copy()

@@ -1605,7 +1605,7 @@ def lifecycle_on_exit(
 @app.command("spawn")
 def spawn_agent(
     backend: Optional[str] = typer.Argument(None, help="Backend: tmux (default) or subprocess"),
-    command: list[str] = typer.Argument(None, help="Command and arguments to run (default: claude)"),
+    command: list[str] = typer.Argument(None, help="Command and arguments to run (default: openclaw)"),
     team: Optional[str] = typer.Option(None, "--team", "-t", help="Team name"),
     agent_name: Optional[str] = typer.Option(None, "--agent-name", "-n", help="Agent name"),
     agent_type: str = typer.Option("general-purpose", "--agent-type", help="Agent type"),
