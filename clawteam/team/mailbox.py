@@ -6,8 +6,10 @@ import json
 import time
 import uuid
 
+from clawteam.paths import ensure_within_root, validate_identifier
 from clawteam.team.models import MessageType, TeamMessage, get_data_dir
 from clawteam.transport.base import Transport
+from clawteam.transport.claimed import ClaimedMessage
 
 
 def _default_transport(team_name: str) -> Transport:
@@ -38,8 +40,9 @@ class MailboxManager:
 
     def __init__(self, team_name: str, transport: Transport | None = None):
         self.team_name = team_name
+        validate_identifier(team_name, "team name")
         self._transport = transport or _default_transport(team_name)
-        self._events_dir = get_data_dir() / "teams" / team_name / "events"
+        self._events_dir = ensure_within_root(get_data_dir() / "teams", team_name, "events")
         self._events_dir.mkdir(parents=True, exist_ok=True)
 
     def _log_event(self, msg: TeamMessage) -> None:
@@ -152,8 +155,37 @@ class MailboxManager:
                 messages.append(msg)
         return messages
 
+    @staticmethod
+    def _parse_messages(raw: list[bytes]) -> list[TeamMessage]:
+        result: list[TeamMessage] = []
+        for item in raw:
+            try:
+                result.append(TeamMessage.model_validate(json.loads(item)))
+            except Exception:
+                continue
+        return result
+
+    def _parse_claimed_messages(self, claimed: list[ClaimedMessage]) -> list[TeamMessage]:
+        result: list[TeamMessage] = []
+        for item in claimed:
+            try:
+                message = TeamMessage.model_validate(json.loads(item.data))
+            except Exception as exc:
+                item.quarantine(str(exc))
+                continue
+            item.ack()
+            result.append(message)
+        return result
+
     def receive(self, agent_name: str, limit: int = 10) -> list[TeamMessage]:
-        """Receive and delete messages from an agent's inbox (FIFO)."""
+        """Receive parsed messages from an agent's inbox (FIFO).
+
+        When a transport supports claimed messages, schema validation and
+        quarantine decisions happen here after the raw bytes have been claimed.
+        """
+        claim_messages = getattr(self._transport, "claim_messages", None)
+        if callable(claim_messages):
+            return self._parse_claimed_messages(claim_messages(agent_name, limit))
         raw = self._transport.fetch(agent_name, limit=limit, consume=True)
         return [TeamMessage.model_validate(json.loads(r)) for r in raw]
 

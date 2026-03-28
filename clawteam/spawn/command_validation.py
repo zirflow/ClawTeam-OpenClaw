@@ -1,4 +1,4 @@
-"""Validation helpers for spawned agent commands."""
+"""Validation and classification helpers for spawned agent commands."""
 
 from __future__ import annotations
 
@@ -49,3 +49,73 @@ def normalize_spawn_command(command: list[str]) -> list[str]:
         return [command[0], "agent"]
 
     return list(command)
+
+
+# ---------------------------------------------------------------------------
+# Command type detection helpers (shared by tmux and subprocess backends)
+# ---------------------------------------------------------------------------
+
+def _cmd_basename(command: list[str]) -> str:
+    """Extract the basename of the first element of a command list."""
+    if not command:
+        return ""
+    return command[0].rsplit("/", 1)[-1]
+
+
+def is_claude_command(command: list[str]) -> bool:
+    """Check if the command is a claude CLI invocation."""
+    return _cmd_basename(command) in ("claude", "claude-code")
+
+
+def is_codex_command(command: list[str]) -> bool:
+    """Check if the command is a codex CLI invocation."""
+    return _cmd_basename(command) in ("codex", "codex-cli")
+
+
+def is_nanobot_command(command: list[str]) -> bool:
+    """Check if the command is a nanobot CLI invocation."""
+    return _cmd_basename(command) == "nanobot"
+
+
+def is_gemini_command(command: list[str]) -> bool:
+    """Check if the command is a Gemini CLI invocation."""
+    return _cmd_basename(command) == "gemini"
+
+
+def is_openclaw_command(command: list[str]) -> bool:
+    """Check if the command is an OpenClaw CLI invocation."""
+    return _cmd_basename(command) in ("openclaw",)
+
+
+def is_kimi_command(command: list[str]) -> bool:
+    """Check if the command is a Kimi CLI invocation."""
+    return _cmd_basename(command) == "kimi"
+
+
+def is_qwen_command(command: list[str]) -> bool:
+    """Check if the command is a Qwen Code CLI invocation."""
+    return _cmd_basename(command) in ("qwen", "qwen-code")
+
+
+def is_opencode_command(command: list[str]) -> bool:
+    """Check if the command is an OpenCode CLI invocation."""
+    return _cmd_basename(command) == "opencode"
+
+
+def is_interactive_cli(command: list[str]) -> bool:
+    """Check if the command is an interactive AI CLI."""
+    return (
+        is_claude_command(command)
+        or is_codex_command(command)
+        or is_nanobot_command(command)
+        or is_gemini_command(command)
+        or is_openclaw_command(command)
+        or is_kimi_command(command)
+        or is_qwen_command(command)
+        or is_opencode_command(command)
+    )
+
+
+def command_has_workspace_arg(command: list[str]) -> bool:
+    """Return True when a command already specifies a nanobot workspace."""
+    return "-w" in command or "--workspace" in command

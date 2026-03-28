@@ -6,7 +6,35 @@ import json
 import os
 from pathlib import Path
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+
+from clawteam.fileutil import atomic_write_text
+
+
+class AgentProfile(BaseModel):
+    """Reusable agent runtime profile for spawn/launch."""
+
+    description: str = ""
+    agent: str = ""
+    command: list[str] = Field(default_factory=list)
+    model: str = ""
+    base_url: str = ""
+    base_url_env: str = ""
+    api_key_env: str = ""
+    api_key_target_env: str = ""
+    env: dict[str, str] = Field(default_factory=dict)
+    env_map: dict[str, str] = Field(default_factory=dict)
+    args: list[str] = Field(default_factory=list)
+
+
+class AgentPreset(BaseModel):
+    """Shared preset input for generating client-scoped profiles."""
+
+    description: str = ""
+    auth_env: str = ""
+    base_url: str = ""
+    env: dict[str, str] = Field(default_factory=dict)
+    client_overrides: dict[str, AgentProfile] = Field(default_factory=dict)
 
 
 class ClawTeamConfig(BaseModel):
@@ -14,9 +42,12 @@ class ClawTeamConfig(BaseModel):
     user: str = ""
     default_team: str = ""
     transport: str = ""
+    task_store: str = ""  # "file" (default) — extensible for redis/sql later
     workspace: str = "auto"  # "auto" | "always" | "never" | ""
     default_backend: str = "tmux"  # "tmux" | "subprocess"
     skip_permissions: bool = True  # pass --dangerously-skip-permissions to claude
+    spawn_prompt_delay: float = 2.0  # fallback wait (seconds) if TUI ready-detection times out
+    spawn_ready_timeout: float = 30.0  # max seconds to poll for TUI readiness before fallback
 
 
 def config_path() -> Path:
@@ -37,12 +68,8 @@ def load_config() -> ClawTeamConfig:
 
 
 def save_config(cfg: ClawTeamConfig) -> None:
-    """Atomically write config to disk (tmp + rename)."""
-    p = config_path()
-    p.parent.mkdir(parents=True, exist_ok=True)
-    tmp = p.with_suffix(".tmp")
-    tmp.write_text(cfg.model_dump_json(indent=2), encoding="utf-8")
-    tmp.rename(p)
+    """Atomically write config to disk (mkstemp + replace)."""
+    atomic_write_text(config_path(), cfg.model_dump_json(indent=2))
 
 
 def get_effective(key: str) -> tuple[str, str]:
@@ -55,9 +82,12 @@ def get_effective(key: str) -> tuple[str, str]:
         "user": "CLAWTEAM_USER",
         "default_team": "CLAWTEAM_TEAM_NAME",
         "transport": "CLAWTEAM_TRANSPORT",
+        "task_store": "CLAWTEAM_TASK_STORE",
         "workspace": "CLAWTEAM_WORKSPACE",
         "default_backend": "CLAWTEAM_DEFAULT_BACKEND",
         "skip_permissions": "CLAWTEAM_SKIP_PERMISSIONS",
+        "spawn_prompt_delay": "CLAWTEAM_SPAWN_PROMPT_DELAY",
+        "spawn_ready_timeout": "CLAWTEAM_SPAWN_READY_TIMEOUT",
     }
     defaults = ClawTeamConfig()
     cfg = load_config()

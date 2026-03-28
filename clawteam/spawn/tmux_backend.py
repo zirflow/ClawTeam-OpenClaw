@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import re
 import shlex
 import shutil
 import subprocess
@@ -11,7 +12,21 @@ import time
 
 from clawteam.spawn.base import SpawnBackend
 from clawteam.spawn.cli_env import build_spawn_path, resolve_clawteam_executable
-from clawteam.spawn.command_validation import normalize_spawn_command, validate_spawn_command
+from clawteam.spawn.command_validation import (
+    command_has_workspace_arg,
+    is_claude_command,
+    is_codex_command,
+    is_gemini_command,
+    is_kimi_command,
+    is_nanobot_command,
+    is_openclaw_command,
+    is_opencode_command,
+    is_qwen_command,
+    normalize_spawn_command,
+    validate_spawn_command,
+)
+
+_SHELL_ENV_KEY_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]*\Z")
 
 
 class TmuxBackend(SpawnBackend):
@@ -41,14 +56,20 @@ class TmuxBackend(SpawnBackend):
 
         session_name = f"clawteam-{team_name}"
         clawteam_bin = resolve_clawteam_executable()
-        env_vars = {
+        env_vars = os.environ.copy()
+        # Interactive CLIs like Codex refuse to start when TERM=dumb is inherited
+        # from a non-interactive shell. tmux provides a real terminal, so we
+        # normalize TERM to a sensible value before exporting it into the pane.
+        if env_vars.get("TERM", "").lower() == "dumb":
+            env_vars["TERM"] = "xterm-256color"
+        env_vars.update({
             "CLAWTEAM_AGENT_ID": agent_id,
             "CLAWTEAM_AGENT_NAME": agent_name,
             "CLAWTEAM_AGENT_TYPE": agent_type,
             "CLAWTEAM_TEAM_NAME": team_name,
             "CLAWTEAM_AGENT_LEADER": "0",
             "CLAWTEAM_MEMORY_SCOPE": f"custom:team-{team_name}",
-        }
+        })
         # Propagate user if set
         user = os.environ.get("CLAWTEAM_USER", "")
         if user:
@@ -71,18 +92,25 @@ class TmuxBackend(SpawnBackend):
         if command_error:
             return command_error
 
-        export_str = "; ".join(f"export {k}={shlex.quote(v)}" for k, v in env_vars.items())
+        # tmux launches the command through a shell, so only shell-safe
+        # environment names can be exported. The current host environment on
+        # WSL includes names like ``PROGRAMFILES(X86)``, which would abort the
+        # shell before the pane becomes observable.
+        export_vars = {k: v for k, v in env_vars.items() if _SHELL_ENV_KEY_RE.fullmatch(k)}
+        export_str = "; ".join(f"export {k}={shlex.quote(v)}" for k, v in export_vars.items())
 
-        # Build the command (without prompt — we'll send it via send-keys)
+        # Build the command (without prompt -- we'll send it via send-keys)
         final_command = list(normalized_command)
         if skip_permissions:
-            if _is_claude_command(normalized_command):
+            if is_claude_command(normalized_command) or is_qwen_command(normalized_command):
                 final_command.append("--dangerously-skip-permissions")
-            elif _is_codex_command(normalized_command):
+            elif is_codex_command(normalized_command):
                 final_command.append("--dangerously-bypass-approvals-and-sandbox")
+            elif is_gemini_command(normalized_command) or is_kimi_command(normalized_command) or is_opencode_command(normalized_command):
+                final_command.append("--yolo")
 
         # OpenClaw TUI: pass --message for initial prompt and --session for isolation
-        if _is_openclaw_command(normalized_command):
+        if is_openclaw_command(normalized_command):
             session_key = f"clawteam-{team_name}-{agent_name}"
             if final_command[0].endswith("openclaw") and len(final_command) == 1:
                 final_command = [final_command[0], "tui", "--session", session_key]
@@ -96,13 +124,22 @@ class TmuxBackend(SpawnBackend):
                 if prompt:
                     final_command.extend(["--message", prompt])
 
-        if _is_nanobot_command(normalized_command):
-            if cwd and not _command_has_workspace_arg(normalized_command):
+        if is_kimi_command(normalized_command):
+            if cwd and not command_has_workspace_arg(normalized_command):
+                final_command.extend(["-w", cwd])
+            if prompt:
+                final_command.extend(["--print", "-p", prompt])
+        elif is_nanobot_command(normalized_command):
+            if cwd and not command_has_workspace_arg(normalized_command):
                 final_command.extend(["-w", cwd])
             if prompt:
                 final_command.extend(["-m", prompt])
-        elif prompt and _is_codex_command(normalized_command):
+        elif prompt and is_codex_command(normalized_command):
             final_command.append(prompt)
+        elif prompt and is_gemini_command(normalized_command):
+            final_command.extend(["-p", prompt])
+        elif prompt and (is_qwen_command(normalized_command) or is_opencode_command(normalized_command)):
+            final_command.extend(["-p", prompt])
 
         cmd_str = " ".join(shlex.quote(c) for c in final_command)
         # Append on-exit hook: runs immediately when agent process exits
@@ -145,67 +182,45 @@ class TmuxBackend(SpawnBackend):
             stderr = launch.stderr.decode() if isinstance(launch.stderr, bytes) else launch.stderr
             return f"Error: failed to launch tmux session: {(stderr or '').strip()}"
 
-        # Detect commands that die before the session becomes observable.
-        time.sleep(0.3)
-        pane_check = subprocess.run(
-            ["tmux", "list-panes", "-t", target, "-F", "#{pane_id}"],
-            capture_output=True,
-            text=True,
-        )
-        if pane_check.returncode != 0 or not pane_check.stdout.strip():
+        from clawteam.config import load_config
+
+        cfg = load_config()
+        pane_ready_timeout = min(cfg.spawn_ready_timeout, max(4.0, cfg.spawn_prompt_delay + 2.0))
+        if not _wait_for_tmux_pane(
+            target,
+            timeout_seconds=pane_ready_timeout,
+            poll_interval_seconds=0.2,
+        ):
             return (
-                f"Error: agent command '{normalized_command[0]}' exited immediately after launch. "
-                "Verify the CLI works standalone before using it with clawteam spawn."
+                f"Error: tmux pane for '{normalized_command[0]}' did not become visible "
+                f"within {pane_ready_timeout:.1f}s. Verify the CLI works standalone before "
+                "using it with clawteam spawn."
             )
 
-        _confirm_workspace_trust_if_prompted(target, normalized_command)
+        _confirm_workspace_trust_if_prompted(
+            target,
+            normalized_command,
+            timeout_seconds=cfg.spawn_ready_timeout,
+        )
 
         # Send the prompt as input to the interactive session
-        # OpenClaw TUI, Codex, and nanobot already received prompt via command args, skip here.
-        if prompt and _is_claude_command(normalized_command):
-            # Wait briefly for claude to start up
-            time.sleep(2)
-            # Write prompt to a temp file and use load-buffer + paste-buffer
-            # to avoid escaping issues for multi-line prompts.
-            with tempfile.NamedTemporaryFile(
-                mode="w", suffix=".txt", delete=False, prefix="clawteam-prompt-"
-            ) as f:
-                f.write(prompt)
-                tmp_path = f.name
-            subprocess.run(
-                ["tmux", "load-buffer", "-b", f"prompt-{agent_name}", tmp_path],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
+        # OpenClaw TUI, Codex, nanobot, and Gemini already received prompt via command args, skip here.
+        if prompt and is_claude_command(normalized_command):
+            # Wait for Claude Code to finish startup and show input prompt.
+            # Bedrock-backed instances can take 10+ seconds to initialize.
+            _wait_for_cli_ready(
+                target,
+                timeout_seconds=cfg.spawn_ready_timeout,
+                fallback_delay=cfg.spawn_prompt_delay,
             )
-            subprocess.run(
-                ["tmux", "paste-buffer", "-b", f"prompt-{agent_name}", "-t", target],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-            )
-            # Claude interactive mode needs Enter twice after paste:
-            # first to confirm the pasted text, second to submit.
-            time.sleep(0.5)
-            subprocess.run(
-                ["tmux", "send-keys", "-t", target, "Enter"],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-            )
-            time.sleep(0.3)
-            subprocess.run(
-                ["tmux", "send-keys", "-t", target, "Enter"],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-            )
-            # Clean up
-            subprocess.run(
-                ["tmux", "delete-buffer", "-b", f"prompt-{agent_name}"],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-            )
-            os.unlink(tmp_path)
-        elif prompt and not _is_codex_command(normalized_command) and not _is_openclaw_command(normalized_command) and not _is_nanobot_command(normalized_command):
+            _inject_prompt_via_buffer(target, agent_name, prompt)
+        elif prompt and not is_codex_command(normalized_command) and not is_openclaw_command(normalized_command) and not is_nanobot_command(normalized_command) and not is_gemini_command(normalized_command) and not is_kimi_command(normalized_command) and not is_qwen_command(normalized_command) and not is_opencode_command(normalized_command):
             # Generic command: append prompt via send-keys
-            time.sleep(1)
+            _wait_for_tui_ready(
+                target,
+                timeout=cfg.spawn_ready_timeout,
+                fallback_delay=cfg.spawn_prompt_delay,
+            )
             subprocess.run(
                 ["tmux", "send-keys", "-t", target, prompt, "Enter"],
                 stdout=subprocess.PIPE,
@@ -318,57 +333,20 @@ class TmuxBackend(SpawnBackend):
         return result
 
 
-def _is_claude_command(command: list[str]) -> bool:
-    """Check if the command is a claude CLI invocation."""
-    if not command:
-        return False
-    cmd = command[0].rsplit("/", 1)[-1]  # basename
-    return cmd in ("claude", "claude-code")
-
-
-def _is_codex_command(command: list[str]) -> bool:
-    """Check if the command is a codex CLI invocation."""
-    if not command:
-        return False
-    cmd = command[0].rsplit("/", 1)[-1]  # basename
-    return cmd in ("codex", "codex-cli")
-
-
-def _is_openclaw_command(command: list[str]) -> bool:
-    """Check if the command is an OpenClaw CLI invocation."""
-    if not command:
-        return False
-    cmd = command[0].rsplit("/", 1)[-1]  # basename
-    return cmd in ("openclaw",)
-
-
-def _is_nanobot_command(command: list[str]) -> bool:
-    """Check if the command is a nanobot CLI invocation."""
-    if not command:
-        return False
-    cmd = command[0].rsplit("/", 1)[-1]
-    return cmd == "nanobot"
-
-
-def _command_has_workspace_arg(command: list[str]) -> bool:
-    """Return True when a command already specifies a nanobot workspace."""
-    return "-w" in command or "--workspace" in command
-
-
 def _confirm_workspace_trust_if_prompted(
     target: str,
     command: list[str],
-    timeout_seconds: float = 30.0,
+    timeout_seconds: float = 5.0,
     poll_interval_seconds: float = 0.2,
 ) -> bool:
-    """Acknowledge first-run workspace trust prompts for interactive CLIs.
+    """Acknowledge startup confirmation prompts for interactive CLIs.
 
     Claude Code and Codex can stop at a directory trust prompt when launched in
-    a fresh git worktree. Detect that specific screen before any prompt
-    injection and accept it with a single Enter so the interactive TUI remains
-    intact.
+    a fresh git worktree. Claude can also pause on a confirmation dialog when
+    ``--dangerously-skip-permissions`` is enabled. Detect these screens before
+    any prompt injection so the interactive TUI remains intact.
     """
-    if not (_is_claude_command(command) or _is_codex_command(command)):
+    if not (is_claude_command(command) or is_codex_command(command) or is_gemini_command(command)):
         return False
 
     deadline = time.monotonic() + timeout_seconds
@@ -379,7 +357,22 @@ def _confirm_workspace_trust_if_prompted(
             text=True,
         )
         pane_text = pane.stdout.lower() if pane.returncode == 0 else ""
-        if _looks_like_workspace_trust_prompt(command, pane_text):
+        action = _startup_prompt_action(command, pane_text)
+        if action == "enter":
+            subprocess.run(
+                ["tmux", "send-keys", "-t", target, "Enter"],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+            time.sleep(0.5)
+            return True
+        if action == "down-enter":
+            subprocess.run(
+                ["tmux", "send-keys", "-t", target, "-l", "\x1b[B"],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+            time.sleep(0.2)
             subprocess.run(
                 ["tmux", "send-keys", "-t", target, "Enter"],
                 stdout=subprocess.PIPE,
@@ -393,23 +386,253 @@ def _confirm_workspace_trust_if_prompted(
     return False
 
 
+def _startup_prompt_action(command: list[str], pane_text: str) -> str | None:
+    """Return the key action needed to dismiss a startup confirmation prompt."""
+    if _looks_like_claude_skip_permissions_prompt(command, pane_text):
+        return "down-enter"
+    if _looks_like_workspace_trust_prompt(command, pane_text):
+        return "enter"
+    return None
+
+
+def _wait_for_tmux_pane(
+    target: str,
+    timeout_seconds: float = 5.0,
+    poll_interval_seconds: float = 0.2,
+) -> bool:
+    """Poll tmux until the target pane exists and is observable."""
+    deadline = time.monotonic() + timeout_seconds
+    while time.monotonic() < deadline:
+        pane = subprocess.run(
+            ["tmux", "list-panes", "-t", target, "-F", "#{pane_id}"],
+            capture_output=True,
+            text=True,
+        )
+        if pane.returncode == 0 and pane.stdout.strip():
+            return True
+        time.sleep(poll_interval_seconds)
+
+    return False
+
+
 def _looks_like_workspace_trust_prompt(command: list[str], pane_text: str) -> bool:
     """Return True when the tmux pane is showing a trust confirmation dialog."""
     if not pane_text:
         return False
 
-    if _is_claude_command(command):
-        return "trust this folder" in pane_text and "enter to confirm" in pane_text
+    if is_claude_command(command):
+        return ("trust this folder" in pane_text or "trust the contents" in pane_text) and (
+            "enter to confirm" in pane_text or "press enter" in pane_text or "enter to continue" in pane_text
+        )
 
-    if _is_codex_command(command):
+    if is_codex_command(command):
         return (
             "trust the contents of this directory" in pane_text
             and "press enter to continue" in pane_text
         )
 
+    if is_gemini_command(command):
+        return "trust folder" in pane_text or "trust parent folder" in pane_text
+
     return False
 
 
-def _is_interactive_cli(command: list[str]) -> bool:
-    """Check if the command is an interactive AI CLI."""
-    return _is_claude_command(command) or _is_codex_command(command) or _is_openclaw_command(command) or _is_nanobot_command(command)
+def _looks_like_claude_skip_permissions_prompt(command: list[str], pane_text: str) -> bool:
+    """Return True when Claude is waiting for the dangerous-permissions confirmation."""
+    if not pane_text or not is_claude_command(command):
+        return False
+
+    has_accept_choice = "yes, i accept" in pane_text
+    has_permissions_warning = (
+        "dangerously-skip-permissions" in pane_text
+        or "skip permissions" in pane_text
+        or "permission" in pane_text
+        or "approval" in pane_text
+    )
+    return has_accept_choice and has_permissions_warning
+
+
+def _looks_like_codex_update_prompt(pane_text: str) -> bool:
+    """Return True when Codex is showing the update gate before the main TUI."""
+    if not pane_text:
+        return False
+
+    return (
+        "update available" in pane_text
+        and "press enter to continue" in pane_text
+        and ("update now" in pane_text or "skip until next version" in pane_text)
+    )
+
+
+def _dismiss_codex_update_prompt_if_present(
+    target: str,
+    command: list[str],
+    timeout_seconds: float = 5.0,
+    poll_interval_seconds: float = 0.2,
+) -> bool:
+    """Dismiss the Codex update gate if it is blocking the interactive UI."""
+    if not is_codex_command(command):
+        return False
+
+    deadline = time.monotonic() + timeout_seconds
+    while time.monotonic() < deadline:
+        pane = subprocess.run(
+            ["tmux", "capture-pane", "-p", "-t", target],
+            capture_output=True,
+            text=True,
+        )
+        pane_text = pane.stdout.lower() if pane.returncode == 0 else ""
+        if _looks_like_codex_update_prompt(pane_text):
+            subprocess.run(
+                ["tmux", "send-keys", "-t", target, "Enter"],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+            time.sleep(0.5)
+            return True
+
+        if pane_text and "openai codex" in pane_text:
+            return False
+
+        time.sleep(poll_interval_seconds)
+
+    return False
+
+
+def _wait_for_cli_ready(
+    target: str,
+    timeout_seconds: float = 30.0,
+    fallback_delay: float = 2.0,
+    poll_interval: float = 1.0,
+) -> bool:
+    """Poll tmux pane until an interactive CLI shows an input prompt.
+
+    Uses two complementary heuristics:
+
+    1. **Prompt indicators** -- common prompt characters or well-known hint
+       lines in the last few visible lines.
+    2. **Content stabilization** -- if the pane output has stopped changing
+       for two consecutive polls and contains visible text, the CLI has
+       likely finished initialisation and is waiting for input.
+
+    Returns True when ready, False on timeout (caller should still
+    attempt injection as a best-effort).
+    """
+    deadline = time.monotonic() + timeout_seconds
+    last_content = ""
+    stable_count = 0
+
+    while time.monotonic() < deadline:
+        pane = subprocess.run(
+            ["tmux", "capture-pane", "-p", "-t", target],
+            capture_output=True,
+            text=True,
+        )
+        if pane.returncode != 0:
+            time.sleep(poll_interval)
+            continue
+
+        text = pane.stdout
+        lines = [ln.strip() for ln in text.splitlines() if ln.strip()]
+        tail = lines[-10:] if len(lines) >= 10 else lines
+
+        for line in tail:
+            # Claude Code shows these prompt characters when ready
+            if line.startswith(("\u276f", ">", "\u203a")):
+                return True
+            # Also detect the "Try ..." hint line
+            if "Try " in line and "write a test" in line:
+                return True
+
+        if text == last_content and lines:
+            stable_count += 1
+            if stable_count >= 2:
+                return True
+        else:
+            stable_count = 0
+            last_content = text
+
+        time.sleep(poll_interval)
+    time.sleep(fallback_delay)
+    return False
+
+
+def _wait_for_tui_ready(
+    target: str,
+    timeout: float = 30.0,
+    fallback_delay: float = 2.0,
+    poll_interval: float = 0.5,
+) -> None:
+    """Poll the tmux pane until the TUI appears ready, then return.
+
+    This is used for interactive CLIs that still rely on tmux send-keys prompt
+    injection. When readiness is not detected before ``timeout``, we keep the
+    previous fallback behaviour and sleep for ``fallback_delay`` seconds.
+    """
+    ready_hints = ("\u256d", "\u2554", "\u250c", "\u2502", "\u2551", "\u2713", ">", "\u276f", "\u203a")
+    time.sleep(0.5)
+
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        result = subprocess.run(
+            ["tmux", "capture-pane", "-t", target, "-p"],
+            capture_output=True,
+            text=True,
+        )
+        if result.returncode == 0 and any(hint in result.stdout for hint in ready_hints):
+            return
+        time.sleep(poll_interval)
+
+    time.sleep(fallback_delay)
+
+
+def _inject_prompt_via_buffer(
+    target: str,
+    agent_name: str,
+    prompt: str,
+) -> None:
+    """Inject a prompt into a tmux pane via ``load-buffer`` / ``paste-buffer``.
+
+    Using a temp file avoids the shell-escaping pitfalls of ``send-keys`` for
+    multi-line or special-character prompts. Two Enter keystrokes are sent
+    after the paste to confirm and submit.
+    """
+    buf_name = f"prompt-{agent_name}"
+    with tempfile.NamedTemporaryFile(
+        mode="w", suffix=".txt", delete=False, prefix="clawteam-prompt-"
+    ) as f:
+        f.write(prompt)
+        tmp_path = f.name
+
+    try:
+        subprocess.run(
+            ["tmux", "load-buffer", "-b", buf_name, tmp_path],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        subprocess.run(
+            ["tmux", "paste-buffer", "-b", buf_name, "-t", target],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        # Claude interactive mode needs Enter twice after paste:
+        # first to confirm the pasted text, second to submit.
+        time.sleep(0.5)
+        subprocess.run(
+            ["tmux", "send-keys", "-t", target, "Enter"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        time.sleep(0.3)
+        subprocess.run(
+            ["tmux", "send-keys", "-t", target, "Enter"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        subprocess.run(
+            ["tmux", "delete-buffer", "-b", buf_name],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+    finally:
+        os.unlink(tmp_path)
