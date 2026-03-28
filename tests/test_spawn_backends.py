@@ -603,7 +603,7 @@ def test_tmux_backend_waits_for_pane_before_declaring_failure(monkeypatch, tmp_p
     assert any(call[:3] == ["tmux", "list-panes", "-t"] for call in run_calls)
 
 
-def test_dismiss_codex_update_prompt_sends_enter(monkeypatch):
+def test_dismiss_codex_update_prompt_sends_enter_versioned(monkeypatch):
     run_calls: list[list[str]] = []
     capture_count = 0
 
@@ -621,7 +621,7 @@ def test_dismiss_codex_update_prompt_sends_enter(monkeypatch):
             if capture_count == 1:
                 return Result(
                     stdout=(
-                        "✨ Update available! 0.113.0 -> 0.116.0\n"
+                        "\u2728 Update available! 0.113.0 -> 0.116.0\n"
                         "1 Update now\n"
                         "2 Skip\n"
                         "3 Skip until next version\n"

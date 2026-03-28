@@ -13,8 +13,11 @@ from clawteam.spawn.command_validation import (
     is_claude_command,
     is_codex_command,
     is_gemini_command,
+    is_kimi_command,
     is_nanobot_command,
+    is_opencode_command,
     is_openclaw_command,
+    is_qwen_command,
     normalize_spawn_command,
     validate_spawn_command,
 )
@@ -72,13 +75,18 @@ class SubprocessBackend(SpawnBackend):
 
         final_command = list(normalized_command)
         if skip_permissions:
-            if is_claude_command(normalized_command):
+            if is_claude_command(normalized_command) or is_qwen_command(normalized_command):
                 final_command.append("--dangerously-skip-permissions")
             elif is_codex_command(normalized_command):
                 final_command.append("--dangerously-bypass-approvals-and-sandbox")
-            elif is_gemini_command(normalized_command):
+            elif is_gemini_command(normalized_command) or is_kimi_command(normalized_command) or is_opencode_command(normalized_command):
                 final_command.append("--yolo")
-        if is_nanobot_command(normalized_command):
+        if is_kimi_command(normalized_command):
+            if cwd and not command_has_workspace_arg(normalized_command):
+                final_command.extend(["-w", cwd])
+            if prompt:
+                final_command.extend(["--print", "-p", prompt])
+        elif is_nanobot_command(normalized_command):
             if cwd and not command_has_workspace_arg(normalized_command):
                 final_command.extend(["-w", cwd])
             if prompt:
@@ -123,7 +131,7 @@ class SubprocessBackend(SpawnBackend):
             agent_name=agent_name,
             backend="subprocess",
             pid=process.pid,
-            command=list(normalized_command),
+            command=list(final_command),
         )
 
         return f"Agent '{agent_name}' spawned as subprocess (pid={process.pid})"

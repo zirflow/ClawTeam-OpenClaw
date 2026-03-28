@@ -17,8 +17,11 @@ from clawteam.spawn.command_validation import (
     is_claude_command,
     is_codex_command,
     is_gemini_command,
+    is_kimi_command,
     is_nanobot_command,
+    is_opencode_command,
     is_openclaw_command,
+    is_qwen_command,
     normalize_spawn_command,
     validate_spawn_command,
 )
@@ -99,11 +102,11 @@ class TmuxBackend(SpawnBackend):
         # Build the command (without prompt -- we'll send it via send-keys)
         final_command = list(normalized_command)
         if skip_permissions:
-            if is_claude_command(normalized_command):
+            if is_claude_command(normalized_command) or is_qwen_command(normalized_command):
                 final_command.append("--dangerously-skip-permissions")
             elif is_codex_command(normalized_command):
                 final_command.append("--dangerously-bypass-approvals-and-sandbox")
-            elif is_gemini_command(normalized_command):
+            elif is_gemini_command(normalized_command) or is_kimi_command(normalized_command) or is_opencode_command(normalized_command):
                 final_command.append("--yolo")
 
         # OpenClaw TUI: pass --message for initial prompt and --session for isolation
@@ -121,7 +124,12 @@ class TmuxBackend(SpawnBackend):
                 if prompt:
                     final_command.extend(["--message", prompt])
 
-        if is_nanobot_command(normalized_command):
+        if is_kimi_command(normalized_command):
+            if cwd and not command_has_workspace_arg(normalized_command):
+                final_command.extend(["-w", cwd])
+            if prompt:
+                final_command.extend(["--print", "-p", prompt])
+        elif is_nanobot_command(normalized_command):
             if cwd and not command_has_workspace_arg(normalized_command):
                 final_command.extend(["-w", cwd])
             if prompt:
@@ -204,7 +212,7 @@ class TmuxBackend(SpawnBackend):
                 fallback_delay=cfg.spawn_prompt_delay,
             )
             _inject_prompt_via_buffer(target, agent_name, prompt)
-        elif prompt and not is_codex_command(normalized_command) and not is_openclaw_command(normalized_command) and not is_nanobot_command(normalized_command) and not is_gemini_command(normalized_command):
+        elif prompt and not is_codex_command(normalized_command) and not is_openclaw_command(normalized_command) and not is_nanobot_command(normalized_command) and not is_gemini_command(normalized_command) and not is_kimi_command(normalized_command) and not is_qwen_command(normalized_command) and not is_opencode_command(normalized_command):
             # Generic command: append prompt via send-keys
             _wait_for_tui_ready(
                 target,
@@ -440,6 +448,53 @@ def _looks_like_claude_skip_permissions_prompt(command: list[str], pane_text: st
         or "approval" in pane_text
     )
     return has_accept_choice and has_permissions_warning
+
+
+def _looks_like_codex_update_prompt(pane_text: str) -> bool:
+    """Return True when Codex is showing the update gate before the main TUI."""
+    if not pane_text:
+        return False
+
+    return (
+        "update available" in pane_text
+        and "press enter to continue" in pane_text
+        and ("update now" in pane_text or "skip until next version" in pane_text)
+    )
+
+
+def _dismiss_codex_update_prompt_if_present(
+    target: str,
+    command: list[str],
+    timeout_seconds: float = 5.0,
+    poll_interval_seconds: float = 0.2,
+) -> bool:
+    """Dismiss the Codex update gate if it is blocking the interactive UI."""
+    if not is_codex_command(command):
+        return False
+
+    deadline = time.monotonic() + timeout_seconds
+    while time.monotonic() < deadline:
+        pane = subprocess.run(
+            ["tmux", "capture-pane", "-p", "-t", target],
+            capture_output=True,
+            text=True,
+        )
+        pane_text = pane.stdout.lower() if pane.returncode == 0 else ""
+        if _looks_like_codex_update_prompt(pane_text):
+            subprocess.run(
+                ["tmux", "send-keys", "-t", target, "Enter"],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+            time.sleep(0.5)
+            return True
+
+        if pane_text and "openai codex" in pane_text:
+            return False
+
+        time.sleep(poll_interval_seconds)
+
+    return False
 
 
 def _wait_for_cli_ready(
