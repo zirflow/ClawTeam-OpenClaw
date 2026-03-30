@@ -26,6 +26,7 @@ class AgentDef(BaseModel):
     type: str = "general-purpose"
     task: str = ""
     command: list[str] | None = None
+    task_type: str = "parallel"  # parallel | sequential | hybrid
 
 
 class TaskDef(BaseModel):
@@ -42,6 +43,25 @@ class TemplateDef(BaseModel):
     leader: AgentDef
     agents: list[AgentDef] = []
     tasks: list[TaskDef] = []
+    max_agents: int = 4  # Research-backed default (arXiv:2512.08296)
+
+
+# ---------------------------------------------------------------------------
+# Agent count warning
+# ---------------------------------------------------------------------------
+
+_MAX_AGENTS_WARNING = (
+    "Warning: spawning agent #{count} exceeds recommended max of {max} agents per team. "
+    "Research shows coordination overhead dominates beyond 3-4 agents "
+    "(Google/MIT arXiv:2512.08296). Use --force to suppress."
+)
+
+
+def check_agent_count(current_count: int, max_agents: int) -> str | None:
+    """Return a warning message if current_count exceeds max_agents, else None."""
+    if current_count >= max_agents:
+        return _MAX_AGENTS_WARNING.format(count=current_count + 1, max=max_agents)
+    return None
 
 
 # ---------------------------------------------------------------------------
