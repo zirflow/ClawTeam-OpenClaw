@@ -41,6 +41,7 @@ class SubprocessBackend(SpawnBackend):
         cwd: str | None = None,
         skip_permissions: bool = False,
         openclaw_agent: str | None = None,
+        model: str | None = None,
     ) -> str:
         if openclaw_agent:
             raise NotImplementedError(
@@ -68,6 +69,8 @@ class SubprocessBackend(SpawnBackend):
             spawn_env["CLAWTEAM_TRANSPORT"] = transport
         if cwd:
             spawn_env["CLAWTEAM_WORKSPACE_DIR"] = cwd
+        if model:
+            spawn_env["CLAWTEAM_MODEL"] = model
         if env:
             spawn_env.update(env)
         spawn_env["PATH"] = build_spawn_path(spawn_env.get("PATH"))
@@ -88,6 +91,12 @@ class SubprocessBackend(SpawnBackend):
                 final_command.append("--dangerously-bypass-approvals-and-sandbox")
             elif is_gemini_command(normalized_command) or is_kimi_command(normalized_command) or is_opencode_command(normalized_command):
                 final_command.append("--yolo")
+        # Claude Code: pass --model if specified
+        # Pass --model if specified (claude, openclaw)
+        if model and is_claude_command(normalized_command):
+            final_command.extend(["--model", model])
+        if model and is_openclaw_command(normalized_command):
+            final_command.extend(["--model", model])
         if is_kimi_command(normalized_command):
             if cwd and not command_has_workspace_arg(normalized_command):
                 final_command.extend(["-w", cwd])
