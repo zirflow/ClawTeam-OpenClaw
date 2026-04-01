@@ -339,6 +339,7 @@ class TestSpawnWithRetry:
 
     def test_exponential_backoff_timing(self):
         from unittest.mock import patch
+
         from clawteam.spawn import spawn_with_retry
 
         call_count = 0
