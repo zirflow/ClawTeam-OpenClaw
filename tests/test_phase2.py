@@ -338,24 +338,28 @@ class TestSpawnWithRetry:
         assert result.startswith("Error")
 
     def test_exponential_backoff_timing(self):
+        from unittest.mock import patch
         from clawteam.spawn import spawn_with_retry
 
-        timestamps = []
+        call_count = 0
 
         class TimingBackend:
             def spawn(self, **kwargs):
-                timestamps.append(time.monotonic())
-                if len(timestamps) < 3:
+                nonlocal call_count
+                call_count += 1
+                if call_count < 3:
                     return "Error: fail"
                 return "OK"
 
-        spawn_with_retry(
-            TimingBackend(), max_retries=3, backoff_base=0.05, backoff_max=1.0,
-            command=["test"], agent_name="w1", agent_id="id", agent_type="gp",
-            team_name="t",
-        )
-        assert len(timestamps) == 3
-        # Second gap should be roughly 2x the first (exponential)
-        gap1 = timestamps[1] - timestamps[0]
-        gap2 = timestamps[2] - timestamps[1]
-        assert gap2 > gap1 * 1.1  # relaxed tolerance for CI runners with variable scheduling
+        with patch("clawteam.spawn.time.sleep") as mock_sleep:
+            spawn_with_retry(
+                TimingBackend(), max_retries=3, backoff_base=0.05, backoff_max=1.0,
+                command=["test"], agent_name="w1", agent_id="id", agent_type="gp",
+                team_name="t",
+            )
+        assert call_count == 3
+        # Verify sleep was called with exponential delays: 0.05, 0.10
+        assert mock_sleep.call_count == 2
+        delays = [c.args[0] for c in mock_sleep.call_args_list]
+        assert abs(delays[0] - 0.05) < 1e-9
+        assert abs(delays[1] - 0.10) < 1e-9
