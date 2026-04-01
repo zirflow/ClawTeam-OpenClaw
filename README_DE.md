@@ -163,14 +163,16 @@ openclaw --version  # Or: claude --version / codex --version
 
 ### Schritt 2: ClawTeam installieren
 
-> **Wichtig:** Verwenden Sie nicht `pip install clawteam` — das installiert die Upstream-Version von PyPI, die standardmäßig `claude` nutzt und die OpenClaw-Anpassungen nicht enthält. Installieren Sie immer aus diesem Repository.
+> **⚠️ Führen Sie NICHT `pip install clawteam` oder `npm install -g clawteam` direkt aus:**
+> - `pip install clawteam` installiert die Upstream-Version von PyPI, die standardmäßig `claude` nutzt und die OpenClaw-Anpassungen nicht enthält.
+> - `npm install -g clawteam` installiert ein fremdes Squatting-Paket (Herausgeber `a9logic`). Wenn `clawteam --version` "Coming Soon" anzeigt, haben Sie das falsche Paket. Führen Sie zuerst `npm uninstall -g clawteam` aus.
 >
-> **⚠️ Verwenden Sie auch nicht `npm install -g clawteam`** — auf npm existiert ein gleichnamiges Squatting-Paket (Herausgeber `a9logic`, ohne Bezug zu diesem Projekt). Wenn `clawteam --version` "Coming Soon" anzeigt, haben Sie das falsche Paket. Führen Sie zuerst `npm uninstall -g clawteam` aus.
+> **Verwenden Sie die drei Befehle unten — `pip install -e .` nach dem Clone ist erforderlich. Es installiert aus dem lokalen Repository, nicht von PyPI.**
 
 ```bash
 git clone https://github.com/win4r/ClawTeam-OpenClaw.git
 cd ClawTeam-OpenClaw
-pip install -e .
+pip install -e .    # ← Erforderlich! Installiert aus dem lokalen Repository, NICHT identisch mit pip install clawteam
 ```
 
 Optional — P2P-Transport (ZeroMQ):

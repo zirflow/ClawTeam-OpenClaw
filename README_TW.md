@@ -163,14 +163,16 @@ openclaw --version  # Or: claude --version / codex --version
 
 ### 第二步：安裝 ClawTeam
 
-> **重要提示：**請勿使用 `pip install clawteam` — 那會安裝 PyPI 上的上游版本，預設使用 `claude` 且缺少 OpenClaw 的適配。請始終從本倉庫安裝。
+> **⚠️ 請勿直接執行 `pip install clawteam` 或 `npm install -g clawteam`：**
+> - `pip install clawteam` 會安裝 PyPI 上的上游版本，預設使用 `claude` 且缺少 OpenClaw 適配。
+> - `npm install -g clawteam` 會安裝一個無關的搶注套件（發佈者 `a9logic`）。如果 `clawteam --version` 顯示 "Coming Soon"，表示裝錯了，請先 `npm uninstall -g clawteam`。
 >
-> **⚠️ 也請勿使用 `npm install -g clawteam`** —— npm 上存在同名搶注套件（發佈者 `a9logic`，與本專案無關）。如果你執行 `clawteam --version` 看到 "Coming Soon"，表示裝錯了，請先執行 `npm uninstall -g clawteam` 卸載。
+> **正確做法是下面三條命令——clone 之後的 `pip install -e .` 是必須的，它從本地倉庫安裝，不是從 PyPI。**
 
 ```bash
 git clone https://github.com/win4r/ClawTeam-OpenClaw.git
 cd ClawTeam-OpenClaw
-pip install -e .
+pip install -e .    # ← 必須執行！從本地倉庫安裝，不同於 pip install clawteam
 ```
 
 可選 — P2P 傳輸層（ZeroMQ）：
