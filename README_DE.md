@@ -164,6 +164,8 @@ openclaw --version  # Or: claude --version / codex --version
 ### Schritt 2: ClawTeam installieren
 
 > **Wichtig:** Verwenden Sie nicht `pip install clawteam` — das installiert die Upstream-Version von PyPI, die standardmäßig `claude` nutzt und die OpenClaw-Anpassungen nicht enthält. Installieren Sie immer aus diesem Repository.
+>
+> **⚠️ Verwenden Sie auch nicht `npm install -g clawteam`** — auf npm existiert ein gleichnamiges Squatting-Paket (Herausgeber `a9logic`, ohne Bezug zu diesem Projekt). Wenn `clawteam --version` "Coming Soon" anzeigt, haben Sie das falsche Paket. Führen Sie zuerst `npm uninstall -g clawteam` aus.
 
 ```bash
 git clone https://github.com/win4r/ClawTeam-OpenClaw.git
@@ -269,6 +271,7 @@ bash scripts/install-openclaw.sh
 | `exec-approvals.json not found` | OpenClaw wurde nie ausgeführt | Führen Sie `openclaw` einmal aus, um die Konfiguration zu generieren, dann Schritt 5 wiederholen |
 | Agenten blockieren bei Berechtigungsabfragen | Ausführungsgenehmigungen stehen auf "full" | Schritt 5 ausführen, um auf "allowlist" umzuschalten |
 | `pip install -e .` schlägt fehl | Fehlende Build-Abhängigkeiten | Zuerst `pip install hatchling` ausführen |
+| `clawteam --version` zeigt "Coming Soon" | Falsches npm-Squatting-Paket installiert (`a9logic`, ohne Bezug zu diesem Projekt) | `npm uninstall -g clawteam`, dann gemäß Schritt 2 neu installieren |
 
 ---
 

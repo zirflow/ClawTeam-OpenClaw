@@ -164,6 +164,8 @@ openclaw --version  # Or: claude --version / codex --version
 ### 第二步：安裝 ClawTeam
 
 > **重要提示：**請勿使用 `pip install clawteam` — 那會安裝 PyPI 上的上游版本，預設使用 `claude` 且缺少 OpenClaw 的適配。請始終從本倉庫安裝。
+>
+> **⚠️ 也請勿使用 `npm install -g clawteam`** —— npm 上存在同名搶注套件（發佈者 `a9logic`，與本專案無關）。如果你執行 `clawteam --version` 看到 "Coming Soon"，表示裝錯了，請先執行 `npm uninstall -g clawteam` 卸載。
 
 ```bash
 git clone https://github.com/win4r/ClawTeam-OpenClaw.git
@@ -269,6 +271,7 @@ bash scripts/install-openclaw.sh
 | `exec-approvals.json not found` | OpenClaw 從未執行過 | 先執行一次 `openclaw` 以產生設定檔，然後重試第五步 |
 | 智能體在權限提示中被阻塞 | 執行授權安全模式為 "full" | 執行第五步切換為 "allowlist" |
 | `pip install -e .` 失敗 | 缺少建置依賴 | 先執行 `pip install hatchling` |
+| `clawteam --version` 顯示 "Coming Soon" | 誤裝了 npm 同名搶注套件（`a9logic`，與本專案無關） | `npm uninstall -g clawteam`，然後按第二步重新安裝 |
 
 ---
 
