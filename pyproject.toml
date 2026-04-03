@@ -1,6 +1,6 @@
 [project]
 name = "clawteam"
-version = "0.2.0+openclaw1"
+version = "0.3.0+openclaw1"
 description = "Framework-agnostic multi-agent coordination CLI"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -38,9 +38,9 @@ p2p = [
 clawteam = "clawteam.cli.commands:app"
 
 [project.urls]
-Homepage = "https://github.com/HKUDS/ClawTeam"
-Repository = "https://github.com/HKUDS/ClawTeam"
-Issues = "https://github.com/HKUDS/ClawTeam/issues"
+Homepage = "https://github.com/win4r/ClawTeam-OpenClaw"
+Repository = "https://github.com/win4r/ClawTeam-OpenClaw"
+Issues = "https://github.com/win4r/ClawTeam-OpenClaw/issues"
 
 [build-system]
 requires = ["hatchling"]
