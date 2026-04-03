@@ -370,6 +370,17 @@ Templates are TOML files — **create your own** for any domain.
 </tr>
 </table>
 
+### v0.3.0 — Production Intelligence *(New)*
+- **Cost Dashboard** — real-time token/cost by agent, model, and task (`clawteam board cost`). No competitor has this.
+- **Circuit Breaker** — healthy → degraded → open tri-state with half-open probing
+- **Retry with Backoff** — `spawn_with_retry()` for resilient agent spawning
+- **Idempotency Keys** — deduplication for `create()` and `send()`
+- **Intent-Based Prompts** — military C2 Auftragstaktik: agents get `intent` + `end_state` + `constraints`
+- **Boids Emergence Rules** — Reynolds 1986 flocking rules adapted for LLM agents
+- **Metacognitive Self-Assessment** — agents tag their own confidence levels
+- **Per-Agent Model Resolution** — 7-level priority chain, mix Claude/GPT/Qwen in one team
+- **Runtime Live Injection** — `runtime inject/state/watch` for messaging running agents
+
 **Also:** plan approval workflows, graceful lifecycle management, `--json` output on all commands, cross-machine support (NFS/SSHFS or P2P), multi-user namespacing, spawn validation with auto-rollback, `fcntl` file locking for concurrent safety.
 
 ---
@@ -526,18 +537,9 @@ clawteam config health
 
 ---
 
-## Per-Agent Model Assignment (Preview)
+## Per-Agent Model Assignment
 
-> **Branch:** [`feat/per-agent-model-assignment`](https://github.com/win4r/ClawTeam-OpenClaw/tree/feat/per-agent-model-assignment)
->
-> This feature is available for early testing on a separate branch. It will be merged into `main` once the companion OpenClaw `--model` flag is shipped.
-
-Assign different models to different agent roles for better cost/performance tradeoffs in multi-agent swarms.
-
-```bash
-# Install from the feature branch
-pip install -e "git+https://github.com/win4r/ClawTeam-OpenClaw.git@feat/per-agent-model-assignment#egg=clawteam"
-```
+Assign different models to different agent roles for better cost/performance tradeoffs in multi-agent swarms. Uses a **7-level priority chain**: CLI > agent model > agent tier > template strategy > template model > config default > None.
 
 **Per-agent model in templates:**
 ```toml
@@ -563,26 +565,26 @@ clawteam launch my-template --model gpt-5.4          # override all agents
 clawteam launch my-template --model-strategy auto     # auto-assign by role
 ```
 
-See [issue #1](https://github.com/win4r/ClawTeam-OpenClaw/issues/1) for the full feature request and discussion.
-
 ---
 
 ## Roadmap
 
 | Version | What | Status |
 |---------|------|--------|
-| v0.3 | File + P2P transport, Web UI, multi-user, templates | Shipped |
-| v0.4 | Redis transport — cross-machine messaging | Planned |
-| v0.5 | Shared state layer — team config across machines | Planned |
-| v0.6 | Agent marketplace — community templates | Exploring |
-| v0.7 | Adaptive scheduling — dynamic task reassignment | Exploring |
+| v0.2 | OpenClaw default agent, workspace overlay, zombie detection, 11-language README | Shipped |
+| v0.3 | Research-backed intelligence, cost dashboard, circuit breaker, per-agent models, runtime injection | **Shipped** |
+| v0.4 | Windows full support, A2A Gateway integration | In Progress |
+| v0.5 | Agent template marketplace — community-contributed TOML templates | Planned |
+| v0.6 | Memory deep integration — per-team/per-task knowledge sharing | Planned |
 | v1.0 | Production-grade — auth, permissions, audit logs | Exploring |
 
 ---
 
 ## Contributing
 
-We welcome contributions:
+We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, code style, and PR guidelines.
+
+Areas we'd love help with:
 
 - **Agent integrations** — support for more CLI agents
 - **Team templates** — TOML templates for new domains
