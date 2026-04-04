@@ -13,6 +13,7 @@ import time
 from pathlib import Path
 from xml.sax.saxutils import escape
 
+from clawteam.platform_compat import is_windows
 from clawteam.spawn.base import SpawnBackend
 from clawteam.spawn.cli_env import (
     build_spawn_path,
@@ -97,7 +98,7 @@ class TmuxBackend(SpawnBackend):
         model: str | None = None,
     ) -> str:
         if not shutil.which("tmux"):
-            return "Error: tmux not installed"
+            return _tmux_unavailable_message("spawn")
 
         # Check --agent support once, gate all uses of openclaw_agent
         if openclaw_agent and not _openclaw_supports_agent_flag():
@@ -380,6 +381,9 @@ class TmuxBackend(SpawnBackend):
 
         Returns status message or error.
         """
+        if not shutil.which("tmux"):
+            return _tmux_unavailable_message("attach")
+
         session = TmuxBackend.session_name(team_name)
 
         check = subprocess.run(
@@ -782,3 +786,17 @@ def _render_runtime_notification(envelope) -> str:
 
     lines.append("</clawteam_notification>")
     return "\n".join(lines)
+
+def _tmux_unavailable_message(context: str) -> str:
+    """Return a helpful error when tmux is unavailable."""
+    if is_windows():
+        if context == "attach":
+            return (
+                "Error: tmux is not available on this system. "
+                "On Windows, use 'clawteam board serve' for live monitoring or run ClawTeam inside WSL for tmux support."
+            )
+        return (
+            "Error: tmux is not available on this system. "
+            "On Windows, use the subprocess backend ('clawteam spawn subprocess ...') or run ClawTeam inside WSL for tmux support."
+        )
+    return "Error: tmux not installed"

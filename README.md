@@ -37,6 +37,14 @@ You set the goal. The agent swarm handles the rest — spawning workers, splitti
 
 Works with [OpenClaw](https://openclaw.ai) (default), [Claude Code](https://claude.ai/claude-code), [Codex](https://openai.com/codex), [nanobot](https://github.com/HKUDS/nanobot), [Cursor](https://cursor.com), and any CLI agent.
 
+## Platform Support
+
+- Linux and macOS keep the original `tmux`-first workflow.
+- Windows 10/11 is supported with an automatic fallback to the `subprocess` backend.
+- Task locking, process liveness checks, and signal registration are routed through a shared compatibility layer so unsupported Unix-only behavior degrades safely on Windows.
+- `board attach` still requires `tmux`, so on Windows prefer `clawteam board serve` for live monitoring.
+- If you want the original tmux workflow on Windows, run ClawTeam inside WSL.
+
 ---
 
 ## Why ClawTeam?
@@ -60,7 +68,7 @@ Current AI agents are powerful but work in **isolation**. ClawTeam lets agents s
 <td width="33%">
 
 ### Agents Spawn Agents
-The leader calls `clawteam spawn` to create workers. Each gets its own **git worktree**, **tmux window**, and **identity**.
+The leader calls `clawteam spawn` to create workers. Each gets its own **git worktree**, **spawn backend session**, and **identity**.
 
 ```bash
 clawteam spawn --team my-team \
@@ -87,9 +95,9 @@ clawteam inbox send my-team leader \
 Monitor the swarm from a tiled tmux view or Web UI. The leader handles coordination.
 
 ```bash
-clawteam board attach my-team
-# Or web dashboard
 clawteam board serve --port 8080
+# Or, on Linux/macOS/WSL with tmux:
+clawteam board attach my-team
 ```
 
 </td>
@@ -116,22 +124,23 @@ The agent auto-creates a team, spawns workers, assigns tasks, and coordinates �
 # Create a team
 clawteam team spawn-team my-team -d "Build the auth module" -n leader
 
-# Spawn workers — each gets a git worktree + tmux window
+# Spawn workers — each gets a git worktree plus its own backend session
 clawteam spawn --team my-team --agent-name alice --task "Implement OAuth2 flow"
 clawteam spawn --team my-team --agent-name bob   --task "Write unit tests for auth"
 
 # Watch them work
-clawteam board attach my-team
+clawteam board serve --port 8080
+clawteam board attach my-team   # Linux/macOS/WSL with tmux
 ```
 
 ### Supported Agents
 
 | Agent | Spawn Command | Status |
 |-------|--------------|--------|
-| [OpenClaw](https://openclaw.ai) | `clawteam spawn tmux openclaw --team ...` | **Default** |
-| [Claude Code](https://claude.ai/claude-code) | `clawteam spawn tmux claude --team ...` | Full support |
-| [Codex](https://openai.com/codex) | `clawteam spawn tmux codex --team ...` | Full support |
-| [nanobot](https://github.com/HKUDS/nanobot) | `clawteam spawn tmux nanobot --team ...` | Full support |
+| [OpenClaw](https://openclaw.ai) | `clawteam spawn --team ...` | **Default** |
+| [Claude Code](https://claude.ai/claude-code) | `clawteam spawn claude --team ...` | Full support |
+| [Codex](https://openai.com/codex) | `clawteam spawn codex --team ...` | Full support |
+| [nanobot](https://github.com/HKUDS/nanobot) | `clawteam spawn nanobot --team ...` | Full support |
 | [Cursor](https://cursor.com) | `clawteam spawn subprocess cursor --team ...` | Experimental |
 | Custom scripts | `clawteam spawn subprocess python --team ...` | Full support |
 
@@ -141,25 +150,44 @@ clawteam board attach my-team
 
 ### Step 1: Prerequisites
 
-ClawTeam requires **Python 3.10+**, **tmux**, and at least one CLI coding agent (OpenClaw, Claude Code, Codex, etc.).
+ClawTeam requires **Python 3.10+** and at least one CLI coding agent (OpenClaw, Claude Code, Codex, etc.). On Linux/macOS, the full visual workflow also requires **tmux**. On Windows, `tmux` is optional because ClawTeam defaults to the `subprocess` backend.
 
 **Check what you already have:**
 
 ```bash
-python3 --version   # Need 3.10+
-tmux -V             # Need any version
+python --version    # Need 3.10+
+tmux -V             # Linux/macOS/WSL only
 openclaw --version  # Or: claude --version / codex --version
 ```
 
 **Install missing prerequisites:**
 
-| Tool | macOS | Ubuntu/Debian |
-|------|-------|---------------|
-| Python 3.10+ | `brew install python@3.12` | `sudo apt update && sudo apt install python3 python3-pip` |
-| tmux | `brew install tmux` | `sudo apt install tmux` |
-| OpenClaw | `pip install openclaw` | `pip install openclaw` |
+| Tool | Windows | macOS | Ubuntu/Debian |
+|------|---------|-------|---------------|
+| Python 3.10+ | Install from [python.org](https://www.python.org/downloads/windows/) | `brew install python@3.12` | `sudo apt update && sudo apt install python3 python3-pip` |
+| tmux | Optional | `brew install tmux` | `sudo apt install tmux` |
+| OpenClaw | `pip install openclaw` | `pip install openclaw` | `pip install openclaw` |
 
 > If using Claude Code or Codex instead of OpenClaw, install those per their own docs. OpenClaw is the default but not strictly required.
+
+On Windows, after installation you can verify the backend choice with:
+
+```powershell
+clawteam config get default_backend
+```
+
+### Windows Native Setup
+
+Use this path for PowerShell or Windows Terminal:
+
+```powershell
+py -3 -m pip install -e .
+clawteam config get default_backend   # should print subprocess
+clawteam spawn --team demo --agent-name worker1 --task "Do work"
+clawteam board serve --port 8080
+```
+
+If you want the full tmux experience, install and run ClawTeam inside WSL instead.
 
 ### Step 2: Install ClawTeam
 
@@ -178,10 +206,10 @@ pip install -e .    # ← Required! Installs from local repo, NOT the same as pi
 Optional — P2P transport (ZeroMQ):
 
 ```bash
-pip install -e ".[p2p]"
+python -m pip install -e ".[p2p]"
 ```
 
-### Step 3: Create the `~/bin/clawteam` symlink
+### Step 3: Ensure `clawteam` is on PATH
 
 Spawned agents run in fresh shells that may not have pip's bin directory in PATH. A symlink in `~/bin` ensures `clawteam` is always reachable:
 
@@ -206,6 +234,8 @@ Then ensure `~/bin` is in your PATH — add this to `~/.zshrc` or `~/.bashrc` if
 ```bash
 export PATH="$HOME/bin:$PATH"
 ```
+
+On native Windows, you usually do not need the `~/bin` symlink step. Instead, make sure the Python `Scripts` directory containing `clawteam.exe` is on `PATH`, or activate the virtual environment where you installed ClawTeam before spawning agents.
 
 ### Step 4: Install the OpenClaw skill (OpenClaw users only)
 
@@ -263,12 +293,14 @@ cd ClawTeam-OpenClaw
 bash scripts/install-openclaw.sh
 ```
 
+This script is intended for Linux, macOS, and WSL shells, not native PowerShell.
+
 ### Troubleshooting
 
 | Problem | Cause | Fix |
 |---------|-------|-----|
-| `clawteam: command not found` | pip bin dir not in PATH | Run Step 3 (symlink + PATH) |
-| Spawned agents can't find `clawteam` | Agents run in fresh shells without pip PATH | Verify `~/bin/clawteam` symlink exists and `~/bin` is in PATH |
+| `clawteam: command not found` | pip bin dir not in PATH | Run Step 3 and ensure either `~/bin` or your Python `Scripts` directory is on PATH |
+| Spawned agents can't find `clawteam` | Agents run in fresh shells without pip PATH | Verify `clawteam` is on PATH in new shells; on Windows check the Python `Scripts` directory or active virtualenv |
 | `openclaw approvals` fails | Gateway not running | Start `openclaw gateway` first, then retry Step 5 |
 | `exec-approvals.json not found` | OpenClaw never ran | Run `openclaw` once to generate config, then retry Step 5 |
 | Agents block on permission prompts | Exec approvals security is "full" | Run Step 5 to switch to "allowlist" |
@@ -357,14 +389,13 @@ Templates are TOML files — **create your own** for any domain.
 ### Monitoring & Dashboards
 - `board show` — terminal kanban
 - `board live` — auto-refreshing dashboard
-- `board attach` — tiled tmux view of all agents
+- `board attach` — tiled tmux view of all agents (Linux/macOS/WSL)
 - `board serve` — Web UI with real-time updates
 
 ### Team Templates
 - TOML files define team archetypes (roles, tasks, prompts)
 - One command: `clawteam launch <template>`
 - Variable substitution: `{goal}`, `{team_name}`, `{agent_name}`
-- **Per-agent model assignment** (preview): assign different models to different roles — see [below](#per-agent-model-assignment-preview)
 
 </td>
 </tr>
@@ -401,7 +432,7 @@ Once the skill is installed, talk to your OpenClaw bot in any channel:
 
 | What you say | What happens |
 |-------------|-------------|
-| "Create a 5-agent team to build a web app" | Creates team, tasks, spawns 5 agents in tmux |
+| "Create a 5-agent team to build a web app" | Creates team, tasks, and spawns 5 agents with the configured backend |
 | "Launch a hedge-fund analysis team" | `clawteam launch hedge-fund` with 7 agents |
 | "Check the status of my agent team" | `clawteam board show` with kanban output |
 
@@ -455,14 +486,14 @@ Once the skill is installed, talk to your OpenClaw bot in any channel:
                                       └─────────────────────┘
 ```
 
-All state lives in `~/.clawteam/` as JSON files. No database, no server. Atomic writes with `fcntl` file locking ensure crash safety.
+All state lives in `~/.clawteam/` as JSON files. No database, no server. Atomic writes with cross-platform file locking ensure crash safety.
 
 | Setting | Env Var | Default |
 |---------|---------|---------|
 | Data directory | `CLAWTEAM_DATA_DIR` | `~/.clawteam` |
 | Transport | `CLAWTEAM_TRANSPORT` | `file` |
 | Workspace mode | `CLAWTEAM_WORKSPACE` | `auto` |
-| Spawn backend | `CLAWTEAM_DEFAULT_BACKEND` | `tmux` |
+| Spawn backend | `CLAWTEAM_DEFAULT_BACKEND` | `tmux` on Linux/macOS, `subprocess` on Windows |
 
 ---
 
@@ -480,7 +511,7 @@ clawteam team cleanup <team> --force      # Delete team
 
 # Spawn agents
 clawteam spawn --team <team> --agent-name <name> --task "do this"
-clawteam spawn tmux codex --team <team> --agent-name <name> --task "do this"
+clawteam spawn codex --team <team> --agent-name <name> --task "do this"
 
 # Task management
 clawteam task create <team> "subject" -o <owner> --blocked-by <id1>,<id2>
@@ -497,7 +528,7 @@ clawteam inbox peek <team>                # read without consuming
 # Monitoring
 clawteam board show <team>                # terminal kanban
 clawteam board live <team> --interval 3   # auto-refresh
-clawteam board attach <team>              # tiled tmux view
+clawteam board attach <team>              # tiled tmux view (Linux/macOS/WSL)
 clawteam board serve --port 8080          # web UI
 ```
 
@@ -566,6 +597,7 @@ clawteam launch my-template --model-strategy auto     # auto-assign by role
 ```
 
 ---
+
 
 ## Roadmap
 

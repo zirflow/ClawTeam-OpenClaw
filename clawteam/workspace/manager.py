@@ -89,7 +89,7 @@ class WorkspaceManager:
         try:
             relative = cwd.relative_to(self.repo_root)
             if str(relative) != ".":
-                self.repo_subpath = str(relative)
+                self.repo_subpath = relative.as_posix()
         except ValueError:
             self.repo_subpath = ""
         self.base_branch = git.current_branch(self.repo_root)

@@ -5,21 +5,32 @@ from __future__ import annotations
 import logging
 import time
 
+from clawteam.platform_compat import default_spawn_backend, is_windows
 from clawteam.spawn.base import SpawnBackend
 
 logger = logging.getLogger(__name__)
 
 
-def get_backend(name: str = "tmux") -> SpawnBackend:
+def normalize_backend_name(name: str | None) -> str:
+    """Resolve backend name with a Windows-safe default/fallback."""
+    selected = name or default_spawn_backend()
+    if is_windows() and selected == "tmux":
+        return "subprocess"
+    return selected
+
+
+def get_backend(name: str | None = None) -> SpawnBackend:
     """Factory function to get a spawn backend by name."""
-    if name == "subprocess":
+    selected = normalize_backend_name(name)
+    if selected == "subprocess":
         from clawteam.spawn.subprocess_backend import SubprocessBackend
+
         return SubprocessBackend()
-    elif name == "tmux":
+    if selected == "tmux":
         from clawteam.spawn.tmux_backend import TmuxBackend
+
         return TmuxBackend()
-    else:
-        raise ValueError(f"Unknown spawn backend: {name}. Available: subprocess, tmux")
+    raise ValueError(f"Unknown spawn backend: {selected}. Available: subprocess, tmux")
 
 
 def spawn_with_retry(
@@ -49,4 +60,4 @@ def spawn_with_retry(
     return last_result
 
 
-__all__ = ["SpawnBackend", "get_backend", "spawn_with_retry"]
+__all__ = ["SpawnBackend", "get_backend", "normalize_backend_name", "spawn_with_retry"]
