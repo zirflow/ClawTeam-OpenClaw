@@ -66,7 +66,7 @@ def _load_registry(team_name: str, repo_root: str) -> WorkspaceRegistry:
         try:
             data = json.loads(path.read_text(encoding="utf-8"))
             return WorkspaceRegistry.model_validate(data)
-        except Exception:
+        except (json.JSONDecodeError, OSError, ValueError):
             pass
     return WorkspaceRegistry(team_name=team_name, repo_root=repo_root)
 
@@ -185,7 +185,7 @@ class WorkspaceManager:
         if auto_checkpoint:
             try:
                 self.checkpoint(team_name, agent_name, f"[clawteam] final checkpoint: {agent_name}")
-            except Exception:
+            except (json.JSONDecodeError, OSError, ValueError):
                 pass
 
         try:

@@ -94,7 +94,7 @@ def _read_event_file(path: Path) -> CostEvent | None:
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
         return CostEvent.model_validate(data)
-    except Exception:
+    except (json.JSONDecodeError, OSError, ValueError):
         return None
 
 
@@ -112,7 +112,7 @@ def _load_summary_cache(team_name: str) -> _CostSummaryCache | None:
         if cache.team_name != team_name:
             return None
         return cache
-    except Exception:
+    except (json.JSONDecodeError, OSError, ValueError):
         return None
 
 
@@ -289,7 +289,7 @@ class CostStore:
         tmp.replace(path)
         try:
             _record_event_in_summary_cache(self.team_name, path, event)
-        except Exception:
+        except (json.JSONDecodeError, OSError, ValueError):
             pass
         return event
 
@@ -343,7 +343,7 @@ class CostStore:
         tmp.replace(path)
         try:
             _record_event_in_summary_cache(self.team_name, path, event)
-        except Exception:
+        except (json.JSONDecodeError, OSError, ValueError):
             pass
         return event
 

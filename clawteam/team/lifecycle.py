@@ -104,7 +104,7 @@ class LifecycleManager:
             ws_mgr = get_workspace_manager()
             if ws_mgr:
                 ws_mgr.cleanup_team(team_name)
-        except Exception:
+        except (json.JSONDecodeError, OSError):
             pass
 
         team_dir = ensure_within_root(get_data_dir() / "teams", team_name)

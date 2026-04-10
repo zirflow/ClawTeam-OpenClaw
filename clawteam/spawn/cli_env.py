@@ -73,5 +73,5 @@ def propagate_openclaw_gateway_token(env_vars: dict[str, str]) -> None:
         token = config.get("gateway", {}).get("auth", {}).get("token")
         if token:
             env_vars["OPENCLAW_GATEWAY_TOKEN"] = token
-    except Exception:
+    except (json.JSONDecodeError, OSError, ValueError):
         pass  # best-effort, never crash the spawn flow

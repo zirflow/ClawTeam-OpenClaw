@@ -188,7 +188,7 @@ class TaskWaiter:
                 try:
                     from clawteam.spawn.respawn import respawn_agent
                     respawn_agent(self.team_name, agent_name)
-                except Exception:
+                except (json.JSONDecodeError, OSError):
                     pass  # Best-effort; on-exit hook is the primary respawn path
 
 

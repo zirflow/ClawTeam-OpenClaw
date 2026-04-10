@@ -77,7 +77,7 @@ def referenced_legacy_plan_paths(team_name: str) -> set[Path]:
     for event_file in team_events_dir.glob("evt-*.json"):
         try:
             data = json.loads(event_file.read_text(encoding="utf-8"))
-        except Exception:
+        except (json.JSONDecodeError, OSError, ValueError):
             continue
 
         if data.get("type") != MessageType.plan_approval_request.value:

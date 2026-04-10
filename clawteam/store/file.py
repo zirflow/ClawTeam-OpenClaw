@@ -116,7 +116,7 @@ class FileTaskStore(BaseTaskStore):
                 task = TaskItem.model_validate(data)
                 if task.idempotency_key == key:
                     return task
-            except Exception:
+            except (json.JSONDecodeError, OSError, ValueError):
                 continue
         return None
 
@@ -130,7 +130,7 @@ class FileTaskStore(BaseTaskStore):
         try:
             data = json.loads(path.read_text(encoding="utf-8"))
             return TaskItem.model_validate(data)
-        except Exception:
+        except (json.JSONDecodeError, OSError, ValueError):
             return None
 
     def update(
@@ -266,7 +266,7 @@ class FileTaskStore(BaseTaskStore):
                 if priority and task.priority != priority:
                     continue
                 tasks.append(task)
-            except Exception:
+            except (json.JSONDecodeError, OSError, ValueError):
                 continue
         if sort_by_priority:
             priority_order = {
@@ -336,5 +336,5 @@ class FileTaskStore(BaseTaskStore):
                         task.status = TaskStatus.pending
                     task.updated_at = _now_iso()
                     self._save_unlocked(task)
-            except Exception:
+            except (json.JSONDecodeError, OSError, ValueError):
                 continue

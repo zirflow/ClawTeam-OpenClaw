@@ -201,14 +201,14 @@ def config_health():
     # Mount point check
     try:
         checks["is_mount"] = os.path.ismount(str(data_dir))
-    except Exception:
+    except (json.JSONDecodeError, OSError, ValueError):
         checks["is_mount"] = False
 
     # Teams count
     try:
         teams = TeamManager.discover_teams()
         checks["teams_count"] = len(teams)
-    except Exception:
+    except (json.JSONDecodeError, OSError, ValueError):
         checks["teams_count"] = 0
 
     # User
@@ -1956,7 +1956,7 @@ def spawn_agent(
         current_count = len(get_registry(_team))
         warning = check_agent_count(current_count, max_agents=DEFAULT_MAX_AGENTS)
         if warning:
-            console.print(f"[yellow]{warning}[/yellow]", err=True)
+            console.print(f"[yellow]{warning}[/yellow]", )
 
     # Resolve skip_permissions from config
     if skip_permissions is None:
@@ -2065,7 +2065,7 @@ def spawn_agent(
         if ws_mgr is not None and cwd:
             try:
                 ws_mgr.cleanup_workspace(_team, _name, auto_checkpoint=False)
-            except Exception:
+            except (json.JSONDecodeError, OSError, ValueError):
                 pass
         _output({"error": result}, lambda d: console.print(f"[red]{d['error']}[/red]"))
         raise typer.Exit(1)
@@ -2506,7 +2506,7 @@ def launch_team(
         total_agents = len(tmpl.agents) + 1  # agents + leader
         warning = check_agent_count(total_agents - 1, tmpl.max_agents)
         if warning:
-            console.print(f"[yellow]{warning}[/yellow]", err=True)
+            console.print(f"[yellow]{warning}[/yellow]", )
 
     # 2. Determine team name
     t_name = team_name or f"{tmpl.name}-{uuid.uuid4().hex[:6]}"

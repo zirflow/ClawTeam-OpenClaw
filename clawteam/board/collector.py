@@ -75,7 +75,7 @@ class BoardCollector:
                 all_messages.append(
                     json.loads(msg.model_dump_json(by_alias=True, exclude_none=True))
                 )
-        except Exception:
+        except (json.JSONDecodeError, OSError, ValueError):
             pass
 
         # Cost summary
@@ -91,7 +91,7 @@ class BoardCollector:
                 "eventCount": cost_summary.event_count,
                 "byAgent": cost_summary.by_agent,
             }
-        except Exception:
+        except (json.JSONDecodeError, OSError, ValueError):
             pass
 
         return {
@@ -132,7 +132,7 @@ class BoardCollector:
                     "tasks": data["taskSummary"]["total"],
                     "pendingMessages": total_inbox,
                 })
-            except Exception:
+            except (json.JSONDecodeError, OSError, ValueError):
                 result.append({
                     "name": name,
                     "description": meta.get("description", ""),

@@ -203,7 +203,7 @@ def list_templates() -> list[dict[str, str]]:
                     "description": tmpl.description,
                     "source": "builtin",
                 }
-            except Exception:
+            except (json.JSONDecodeError, OSError, ValueError):
                 continue
 
     # User templates override
@@ -216,7 +216,7 @@ def list_templates() -> list[dict[str, str]]:
                     "description": tmpl.description,
                     "source": "user",
                 }
-            except Exception:
+            except (json.JSONDecodeError, OSError, ValueError):
                 continue
 
     return list(seen.values())

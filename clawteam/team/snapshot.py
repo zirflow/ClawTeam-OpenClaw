@@ -56,7 +56,7 @@ def _read_json_dir(directory: Path, pattern: str) -> list[dict]:
     for f in sorted(directory.glob(pattern)):
         try:
             items.append(json.loads(f.read_text("utf-8")))
-        except Exception:
+        except (json.JSONDecodeError, OSError):
             continue
     return items
 
@@ -68,12 +68,12 @@ def _read_inbox_messages(directory: Path) -> list[dict]:
     for f in sorted(directory.glob("msg-*.json")):
         try:
             items.append(json.loads(f.read_text("utf-8")))
-        except Exception:
+        except (json.JSONDecodeError, OSError):
             continue
     for f in sorted(directory.glob("msg-*.consumed")):
         try:
             handle = f.open("rb")
-        except Exception:
+        except (json.JSONDecodeError, OSError):
             continue
         try:
             try:
@@ -94,7 +94,7 @@ def _read_inbox_messages(directory: Path) -> list[dict]:
                 continue
             try:
                 items.append(json.loads(handle.read().decode("utf-8")))
-            except Exception:
+            except (json.JSONDecodeError, OSError):
                 continue
         finally:
             handle.close()
@@ -190,7 +190,7 @@ class SnapshotManager:
             try:
                 data = json.loads(f.read_text("utf-8"))
                 out.append(SnapshotMeta.model_validate(data["meta"]))
-            except Exception:
+            except (json.JSONDecodeError, OSError):
                 continue
         return out
 

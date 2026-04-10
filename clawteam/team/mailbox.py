@@ -65,7 +65,7 @@ class MailboxManager:
         for f in files:
             try:
                 msgs.append(TeamMessage.model_validate(json.loads(f.read_text("utf-8"))))
-            except Exception:
+            except (json.JSONDecodeError, OSError):
                 pass
         return msgs
 
@@ -170,7 +170,7 @@ class MailboxManager:
         for item in raw:
             try:
                 result.append(TeamMessage.model_validate(json.loads(item)))
-            except Exception:
+            except (json.JSONDecodeError, OSError):
                 continue
         return result
 
@@ -211,7 +211,7 @@ class MailboxManager:
                 msg = TeamMessage.model_validate(data)
                 if msg.idempotency_key == key:
                     return msg
-            except Exception:
+            except (json.JSONDecodeError, OSError):
                 continue
         return None
 

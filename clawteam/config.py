@@ -69,7 +69,7 @@ def load_config() -> ClawTeamConfig:
     try:
         data = json.loads(p.read_text(encoding="utf-8"))
         return ClawTeamConfig.model_validate(data)
-    except Exception:
+    except (json.JSONDecodeError, OSError, ValueError):
         return ClawTeamConfig()
 
 

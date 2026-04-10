@@ -79,7 +79,7 @@ class SessionStore:
         try:
             data = json.loads(path.read_text(encoding="utf-8"))
             return SessionState.model_validate(data)
-        except Exception:
+        except (json.JSONDecodeError, OSError, ValueError):
             return None
 
     def clear(self, agent_name: str) -> bool:
@@ -97,6 +97,6 @@ class SessionStore:
             try:
                 data = json.loads(f.read_text(encoding="utf-8"))
                 sessions.append(SessionState.model_validate(data))
-            except Exception:
+            except (json.JSONDecodeError, OSError, ValueError):
                 continue
         return sessions

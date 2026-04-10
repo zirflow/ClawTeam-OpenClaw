@@ -89,7 +89,7 @@ def _is_locked(path: Path) -> bool:
     """
     try:
         handle = path.open("rb")
-    except Exception:
+    except (json.JSONDecodeError, OSError, ValueError):
         return True
     try:
         locked = try_lock(handle)
@@ -150,7 +150,7 @@ class FileTransport(Transport):
         try:
             tmp.write_bytes(data)
             tmp.replace(target)
-        except Exception:
+        except (json.JSONDecodeError, OSError, ValueError):
             tmp.unlink(missing_ok=True)
             raise
 
@@ -167,7 +167,7 @@ class FileTransport(Transport):
                     continue
             try:
                 file_handle = consumed.open("rb")
-            except Exception:
+            except (json.JSONDecodeError, OSError, ValueError):
                 consumed.unlink(missing_ok=True)
                 continue
 
@@ -176,7 +176,7 @@ class FileTransport(Transport):
                 continue
             try:
                 data = file_handle.read()
-            except Exception:
+            except (json.JSONDecodeError, OSError, ValueError):
                 unlock(file_handle)
                 file_handle.close()
                 consumed.unlink(missing_ok=True)
@@ -241,7 +241,7 @@ class FileTransport(Transport):
                 continue
             try:
                 messages.append(f.read_bytes())
-            except Exception:
+            except (json.JSONDecodeError, OSError, ValueError):
                 continue
         return messages
 

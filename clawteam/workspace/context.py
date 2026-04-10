@@ -21,7 +21,7 @@ def _registry_repo_root(team_name: str) -> str | None:
         return None
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
-    except Exception:
+    except (json.JSONDecodeError, OSError, ValueError):
         return None
     repo_root = data.get("repo_root")
     if not isinstance(repo_root, str) or not repo_root:
@@ -70,7 +70,7 @@ def agent_diff(team_name: str, agent_name: str, repo: str | None = None) -> dict
         numstat_raw = git._run(
             ["diff", "--numstat", f"{base}...{branch}"], cwd=root, check=False,
         )
-    except Exception:
+    except (json.JSONDecodeError, OSError, ValueError):
         numstat_raw = ""
 
     files_changed: list[str] = []
@@ -91,7 +91,7 @@ def agent_diff(team_name: str, agent_name: str, repo: str | None = None) -> dict
         diff_stat = git._run(
             ["diff", "--stat", f"{base}...{branch}"], cwd=root, check=False,
         )
-    except Exception:
+    except (json.JSONDecodeError, OSError, ValueError):
         diff_stat = ""
 
     # Commit count
@@ -100,7 +100,7 @@ def agent_diff(team_name: str, agent_name: str, repo: str | None = None) -> dict
             ["rev-list", "--count", f"{base}..{branch}"], cwd=root, check=False,
         )
         commit_count = int(count_raw) if count_raw.strip().isdigit() else 0
-    except Exception:
+    except (json.JSONDecodeError, OSError, ValueError):
         commit_count = 0
 
     summary = (
@@ -136,7 +136,7 @@ def file_owners(team_name: str, repo: str | None = None) -> dict[str, list[str]]
                 cwd=mgr.repo_root,
                 check=False,
             )
-        except Exception:
+        except (json.JSONDecodeError, OSError, ValueError):
             continue
         for line in numstat.splitlines():
             parts = line.split("\t")
@@ -174,7 +174,7 @@ def cross_branch_log(
                 cwd=mgr.repo_root,
                 check=False,
             )
-        except Exception:
+        except (json.JSONDecodeError, OSError, ValueError):
             continue
 
         current: dict | None = None
@@ -297,7 +297,7 @@ def inject_context(
                         f"- {dep_agent}: {dep_diff['summary']}"
                     )
                 sections.append("\n".join(dep_lines))
-    except Exception:
+    except (json.JSONDecodeError, OSError, ValueError):
         pass  # Tasks may not exist yet
 
     if not sections:
