@@ -170,7 +170,7 @@ openclaw --version  # Or: claude --version / codex --version
 > **以下の 3 つのコマンドを使用してください — clone 後の `pip install -e .` は必須です。PyPI からではなくローカルリポジトリからインストールします。**
 
 ```bash
-git clone https://github.com/win4r/ClawTeam-OpenClaw.git
+git clone https://github.com/zirflow/ClawTeam-OpenClaw.git
 cd ClawTeam-OpenClaw
 pip install -e .    # ← 必須！ローカルリポジトリからインストール。pip install clawteam とは異なります
 ```
@@ -258,7 +258,7 @@ openclaw skills list | grep clawteam
 上記のステップ 2〜6 は、単一のスクリプトでも実行できます：
 
 ```bash
-git clone https://github.com/win4r/ClawTeam-OpenClaw.git
+git clone https://github.com/zirflow/ClawTeam-OpenClaw.git
 cd ClawTeam-OpenClaw
 bash scripts/install-openclaw.sh
 ```
@@ -528,7 +528,7 @@ clawteam config health
 
 ## エージェントごとのモデル割り当て（プレビュー）
 
-> **ブランチ:** [`feat/per-agent-model-assignment`](https://github.com/win4r/ClawTeam-OpenClaw/tree/feat/per-agent-model-assignment)
+> **ブランチ:** [`feat/per-agent-model-assignment`](https://github.com/zirflow/ClawTeam-OpenClaw/tree/feat/per-agent-model-assignment)
 >
 > この機能は、別ブランチで早期テスト向けに公開されています。OpenClaw の `--model` フラグがリリースされ次第、`main` にマージされる予定です。
 
@@ -536,7 +536,7 @@ clawteam config health
 
 ```bash
 # Install from the feature branch
-pip install -e "git+https://github.com/win4r/ClawTeam-OpenClaw.git@feat/per-agent-model-assignment#egg=clawteam"
+pip install -e "git+https://github.com/zirflow/ClawTeam-OpenClaw.git@feat/per-agent-model-assignment#egg=clawteam"
 ```
 
 **テンプレートでのエージェントごとのモデル指定：**
@@ -563,7 +563,7 @@ clawteam launch my-template --model gpt-5.4          # override all agents
 clawteam launch my-template --model-strategy auto     # auto-assign by role
 ```
 
-詳細は [issue #1](https://github.com/win4r/ClawTeam-OpenClaw/issues/1) で機能リクエストとディスカッションを参照してください。
+詳細は [issue #1](https://github.com/zirflow/ClawTeam-OpenClaw/issues/1) で機能リクエストとディスカッションを参照してください。
 
 ---
 

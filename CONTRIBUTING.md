@@ -5,7 +5,7 @@ Thanks for your interest in contributing! This guide helps you get started quick
 ## Setup
 
 ```bash
-git clone https://github.com/win4r/ClawTeam-OpenClaw.git
+git clone https://github.com/zirflow/ClawTeam-OpenClaw.git
 cd ClawTeam-OpenClaw
 pip install -e ".[dev]"
 ```

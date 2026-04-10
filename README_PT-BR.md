@@ -170,7 +170,7 @@ openclaw --version  # Or: claude --version / codex --version
 > **Use os três comandos abaixo — o `pip install -e .` após o clone é obrigatório. Ele instala a partir do repositório local, não do PyPI.**
 
 ```bash
-git clone https://github.com/win4r/ClawTeam-OpenClaw.git
+git clone https://github.com/zirflow/ClawTeam-OpenClaw.git
 cd ClawTeam-OpenClaw
 pip install -e .    # ← Obrigatório! Instala do repositório local, NÃO é o mesmo que pip install clawteam
 ```
@@ -258,7 +258,7 @@ openclaw skills list | grep clawteam
 Os passos 2 a 6 acima também estão disponíveis como um único script:
 
 ```bash
-git clone https://github.com/win4r/ClawTeam-OpenClaw.git
+git clone https://github.com/zirflow/ClawTeam-OpenClaw.git
 cd ClawTeam-OpenClaw
 bash scripts/install-openclaw.sh
 ```
@@ -528,7 +528,7 @@ clawteam config health
 
 ## Atribuição de modelo por agente (Prévia)
 
-> **Branch:** [`feat/per-agent-model-assignment`](https://github.com/win4r/ClawTeam-OpenClaw/tree/feat/per-agent-model-assignment)
+> **Branch:** [`feat/per-agent-model-assignment`](https://github.com/zirflow/ClawTeam-OpenClaw/tree/feat/per-agent-model-assignment)
 >
 > Esta funcionalidade está disponível para testes antecipados em uma branch separada. Será mesclada na `main` assim que a flag `--model` complementar do OpenClaw for lançada.
 
@@ -536,7 +536,7 @@ Atribua modelos diferentes a papéis de agentes diferentes para melhores compens
 
 ```bash
 # Install from the feature branch
-pip install -e "git+https://github.com/win4r/ClawTeam-OpenClaw.git@feat/per-agent-model-assignment#egg=clawteam"
+pip install -e "git+https://github.com/zirflow/ClawTeam-OpenClaw.git@feat/per-agent-model-assignment#egg=clawteam"
 ```
 
 **Modelo por agente em templates:**
@@ -563,7 +563,7 @@ clawteam launch my-template --model gpt-5.4          # override all agents
 clawteam launch my-template --model-strategy auto     # auto-assign by role
 ```
 
-Veja a [issue #1](https://github.com/win4r/ClawTeam-OpenClaw/issues/1) para a solicitação completa da funcionalidade e discussão.
+Veja a [issue #1](https://github.com/zirflow/ClawTeam-OpenClaw/issues/1) para a solicitação completa da funcionalidade e discussão.
 
 ---
 
