@@ -41,9 +41,9 @@ p2p = [
 clawteam = "clawteam.cli.commands:app"
 
 [project.urls]
-Homepage = "https://github.com/win4r/ClawTeam-OpenClaw"
-Repository = "https://github.com/win4r/ClawTeam-OpenClaw"
-Issues = "https://github.com/win4r/ClawTeam-OpenClaw/issues"
+Homepage = "https://github.com/zirflow/ClawTeam-OpenClaw"
+Repository = "https://github.com/zirflow/ClawTeam-OpenClaw"
+Issues = "https://github.com/zirflow/ClawTeam-OpenClaw/issues"
 
 [build-system]
 requires = ["hatchling"]

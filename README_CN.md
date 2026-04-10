@@ -170,7 +170,7 @@ openclaw --version  # Or: claude --version / codex --version
 > **正确做法是下面三条命令——clone 之后的 `pip install -e .` 是必须的，它从本地仓库安装，不是从 PyPI。**
 
 ```bash
-git clone https://github.com/win4r/ClawTeam-OpenClaw.git
+git clone https://github.com/zirflow/ClawTeam-OpenClaw.git
 cd ClawTeam-OpenClaw
 pip install -e .    # ← 必须执行！从本地仓库安装，不同于 pip install clawteam
 ```
@@ -258,7 +258,7 @@ openclaw skills list | grep clawteam
 上述第 2-6 步也可通过一个脚本完成：
 
 ```bash
-git clone https://github.com/win4r/ClawTeam-OpenClaw.git
+git clone https://github.com/zirflow/ClawTeam-OpenClaw.git
 cd ClawTeam-OpenClaw
 bash scripts/install-openclaw.sh
 ```
@@ -528,7 +528,7 @@ clawteam config health
 
 ## 每智能体模型分配（预览版）
 
-> **分支：** [`feat/per-agent-model-assignment`](https://github.com/win4r/ClawTeam-OpenClaw/tree/feat/per-agent-model-assignment)
+> **分支：** [`feat/per-agent-model-assignment`](https://github.com/zirflow/ClawTeam-OpenClaw/tree/feat/per-agent-model-assignment)
 >
 > 此功能在单独分支上提供早期测试。待 OpenClaw 配套的 `--model` 参数发布后，将合并到 `main` 分支。
 
@@ -536,7 +536,7 @@ clawteam config health
 
 ```bash
 # Install from the feature branch
-pip install -e "git+https://github.com/win4r/ClawTeam-OpenClaw.git@feat/per-agent-model-assignment#egg=clawteam"
+pip install -e "git+https://github.com/zirflow/ClawTeam-OpenClaw.git@feat/per-agent-model-assignment#egg=clawteam"
 ```
 
 **模板中的每智能体模型配置：**
@@ -563,7 +563,7 @@ clawteam launch my-template --model gpt-5.4          # override all agents
 clawteam launch my-template --model-strategy auto     # auto-assign by role
 ```
 
-参见 [issue #1](https://github.com/win4r/ClawTeam-OpenClaw/issues/1) 了解完整的功能需求和讨论。
+参见 [issue #1](https://github.com/zirflow/ClawTeam-OpenClaw/issues/1) 了解完整的功能需求和讨论。
 
 ---
 

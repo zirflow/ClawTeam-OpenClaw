@@ -19,7 +19,9 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/zirflow/ClawTeam-OpenClaw/actions"><img src="https://img.shields.io/github/actions/workflow/status/zirflow/ClawTeam-OpenClaw/CI?style=for-the-badge" alt="CI"></a>
   <a href="https://github.com/HKUDS/ClawTeam"><img src="https://img.shields.io/badge/upstream-HKUDS%2FClawTeam-purple?style=for-the-badge" alt="Upstream"></a>
+  <a href="https://zirflow.com"><img src="https://img.shields.io/badge/maintained%20by-Zirflow-teal?style=for-the-badge" alt="Zirflow"></a>
   <a href="#-quick-start"><img src="https://img.shields.io/badge/Quick_Start-3_min-blue?style=for-the-badge" alt="Quick Start"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge" alt="License"></a>
 </p>
@@ -28,10 +30,10 @@
   <img src="https://img.shields.io/badge/python-≥3.10-blue?logo=python&logoColor=white" alt="Python">
   <img src="https://img.shields.io/badge/agents-OpenClaw_%7C_Claude_Code_%7C_Codex_%7C_nanobot-blueviolet" alt="Agents">
   <img src="https://img.shields.io/badge/transport-File_%7C_ZeroMQ_P2P-orange" alt="Transport">
-  <img src="https://img.shields.io/badge/version-0.3.0-teal" alt="Version">
+  <img src="https://img.shields.io/badge/version-0.3.1--zr1-blueviolet?style=for-the-badge" alt="Version">
 </p>
 
-> **Fork of [HKUDS/ClawTeam](https://github.com/HKUDS/ClawTeam)** with deep OpenClaw integration: default `openclaw` agent, per-agent session isolation, exec approval auto-config, and production-hardened spawn backends. All upstream fixes are synced.
+> **Fork of [HKUDS/ClawTeam](https://github.com/HKUDS/ClawTeam)** maintained by [Zirflow](https://zirflow.com). Deep OpenClaw integration with production reliability fixes, race condition patches, and enterprise-ready hardening. All upstream fixes are synced.
 
 You set the goal. The agent swarm handles the rest — spawning workers, splitting tasks, coordinating, and merging results.
 
@@ -198,7 +200,7 @@ If you want the full tmux experience, install and run ClawTeam inside WSL instea
 > **Use the three commands below — the `pip install -e .` step is required. It installs from the local repo, not from PyPI.**
 
 ```bash
-git clone https://github.com/win4r/ClawTeam-OpenClaw.git
+git clone https://github.com/zirflow/ClawTeam-OpenClaw.git
 cd ClawTeam-OpenClaw
 pip install -e .    # ← Required! Installs from local repo, NOT the same as pip install clawteam
 ```
@@ -288,7 +290,7 @@ openclaw skills list | grep clawteam
 Steps 2–6 above are also available as a single script:
 
 ```bash
-git clone https://github.com/win4r/ClawTeam-OpenClaw.git
+git clone https://github.com/zirflow/ClawTeam-OpenClaw.git
 cd ClawTeam-OpenClaw
 bash scripts/install-openclaw.sh
 ```
@@ -609,6 +611,37 @@ clawteam launch my-template --model-strategy auto     # auto-assign by role
 | v0.5 | Agent template marketplace — community-contributed TOML templates | Planned |
 | v0.6 | Memory deep integration — per-team/per-task knowledge sharing | Planned |
 | v1.0 | Production-grade — auth, permissions, audit logs | Exploring |
+
+---
+
+## Zirflow Contributions
+
+This fork is actively maintained by [Zirflow](https://zirflow.com). Our contributions focus on production reliability, race condition fixes, and enterprise hardening.
+
+### Production Reliability Fixes (v0.3.1-zr1)
+
+| Component | Fix | Impact |
+|-----------|-----|--------|
+| `team/manager.py` | `add_member` / `remove_member` protected by `file_locked` | Concurrent spawn race condition eliminated |
+| `team/manager.py` | New `set_budget()` method with locking | Concurrent budget update race condition fixed |
+| `spawn/registry.py` | `unregister_agent` protected by `file_locked` | Worker unregistration race fixed |
+| `workspace/manager.py` | `create_workspace` / `cleanup_workspace` protected | Workspace registry corruption prevented |
+| `spawn/prompt.py` | Worker inbox polling loop added | Workers now properly receive follow-up tasks |
+
+### Our Production Stack
+
+This fork is battle-tested in Zirflow's production environment with:
+- **OpenClaw** as the orchestration backbone
+- **Feishu** (Lark) integration for team communication
+- **n8n** workflow automation
+- **Git worktree** isolation per agent
+- **tmux** backend for process management
+
+### Enterprise Support
+
+For production deployments, custom integrations, or dedicated support:
+- 🌐 [https://zirflow.com](https://zirflow.com)
+- 📧 tech@zirflow.com
 
 ---
 

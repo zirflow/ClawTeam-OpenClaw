@@ -170,7 +170,7 @@ openclaw --version  # Or: claude --version / codex --version
 > **아래 세 가지 명령을 사용하세요 — clone 후 `pip install -e .`는 필수입니다. PyPI가 아닌 로컬 저장소에서 설치합니다.**
 
 ```bash
-git clone https://github.com/win4r/ClawTeam-OpenClaw.git
+git clone https://github.com/zirflow/ClawTeam-OpenClaw.git
 cd ClawTeam-OpenClaw
 pip install -e .    # ← 필수! 로컬 저장소에서 설치. pip install clawteam과 다름
 ```
@@ -258,7 +258,7 @@ openclaw skills list | grep clawteam
 위의 단계 2~6은 단일 스크립트로도 실행할 수 있습니다:
 
 ```bash
-git clone https://github.com/win4r/ClawTeam-OpenClaw.git
+git clone https://github.com/zirflow/ClawTeam-OpenClaw.git
 cd ClawTeam-OpenClaw
 bash scripts/install-openclaw.sh
 ```
@@ -528,7 +528,7 @@ clawteam config health
 
 ## 에이전트별 모델 할당 (프리뷰)
 
-> **브랜치:** [`feat/per-agent-model-assignment`](https://github.com/win4r/ClawTeam-OpenClaw/tree/feat/per-agent-model-assignment)
+> **브랜치:** [`feat/per-agent-model-assignment`](https://github.com/zirflow/ClawTeam-OpenClaw/tree/feat/per-agent-model-assignment)
 >
 > 이 기능은 별도 브랜치에서 조기 테스트용으로 제공됩니다. 동반하는 OpenClaw `--model` 플래그가 출시되면 `main`에 병합될 예정입니다.
 
@@ -536,7 +536,7 @@ clawteam config health
 
 ```bash
 # Install from the feature branch
-pip install -e "git+https://github.com/win4r/ClawTeam-OpenClaw.git@feat/per-agent-model-assignment#egg=clawteam"
+pip install -e "git+https://github.com/zirflow/ClawTeam-OpenClaw.git@feat/per-agent-model-assignment#egg=clawteam"
 ```
 
 **템플릿에서 에이전트별 모델 지정:**
@@ -563,7 +563,7 @@ clawteam launch my-template --model gpt-5.4          # override all agents
 clawteam launch my-template --model-strategy auto     # auto-assign by role
 ```
 
-전체 기능 요청 및 논의는 [이슈 #1](https://github.com/win4r/ClawTeam-OpenClaw/issues/1)을 참조하세요.
+전체 기능 요청 및 논의는 [이슈 #1](https://github.com/zirflow/ClawTeam-OpenClaw/issues/1)을 참조하세요.
 
 ---
 

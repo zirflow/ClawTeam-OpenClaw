@@ -170,7 +170,7 @@ openclaw --version  # Or: claude --version / codex --version
 > **Используйте три команды ниже — `pip install -e .` после клонирования обязателен. Он устанавливает из локального репозитория, а не из PyPI.**
 
 ```bash
-git clone https://github.com/win4r/ClawTeam-OpenClaw.git
+git clone https://github.com/zirflow/ClawTeam-OpenClaw.git
 cd ClawTeam-OpenClaw
 pip install -e .    # ← Обязательно! Установка из локального репозитория, НЕ то же самое что pip install clawteam
 ```
@@ -258,7 +258,7 @@ openclaw skills list | grep clawteam
 Шаги 2–6, описанные выше, также доступны в виде единого скрипта:
 
 ```bash
-git clone https://github.com/win4r/ClawTeam-OpenClaw.git
+git clone https://github.com/zirflow/ClawTeam-OpenClaw.git
 cd ClawTeam-OpenClaw
 bash scripts/install-openclaw.sh
 ```
@@ -528,7 +528,7 @@ clawteam config health
 
 ## Назначение модели для каждого агента (Предварительная версия)
 
-> **Ветка:** [`feat/per-agent-model-assignment`](https://github.com/win4r/ClawTeam-OpenClaw/tree/feat/per-agent-model-assignment)
+> **Ветка:** [`feat/per-agent-model-assignment`](https://github.com/zirflow/ClawTeam-OpenClaw/tree/feat/per-agent-model-assignment)
 >
 > Эта функция доступна для раннего тестирования в отдельной ветке. Она будет объединена в `main` после выхода соответствующего флага `--model` в OpenClaw.
 
@@ -536,7 +536,7 @@ clawteam config health
 
 ```bash
 # Install from the feature branch
-pip install -e "git+https://github.com/win4r/ClawTeam-OpenClaw.git@feat/per-agent-model-assignment#egg=clawteam"
+pip install -e "git+https://github.com/zirflow/ClawTeam-OpenClaw.git@feat/per-agent-model-assignment#egg=clawteam"
 ```
 
 **Назначение модели в шаблонах:**
@@ -563,7 +563,7 @@ clawteam launch my-template --model gpt-5.4          # override all agents
 clawteam launch my-template --model-strategy auto     # auto-assign by role
 ```
 
-Подробности см. в [issue #1](https://github.com/win4r/ClawTeam-OpenClaw/issues/1) — полное описание функции и обсуждение.
+Подробности см. в [issue #1](https://github.com/zirflow/ClawTeam-OpenClaw/issues/1) — полное описание функции и обсуждение.
 
 ---
 
