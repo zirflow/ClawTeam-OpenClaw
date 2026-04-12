@@ -253,19 +253,14 @@ class TmuxBackend(SpawnBackend):
         # when foreground process exits (instead of tmux respawning bash)
         # EXIT hook: run lifecycle in background (don't block), then kill the
         # pane's bash process ($$ = pane's bash PID when trap fires).
-        # kill $$ sends SIGTERM to pane's bash → bash exits → pane closes.
-        lifecycle_subshell = "exec 0"
-        # The EXIT trap fires in pane's bash when it exits. We override it with
-        # our own lifecycle+kill chain. 'exit 0' at the end of lifecycle_subshell
-        # exits the subshell; then pane's bash exits (because foreground is gone),
-        # and the EXIT trap fires in pane's bash — but we want it to fire NOW.
-        #
-        # Actually: the lifecycle_subshell runs in pane's bash as the foreground
-        # command. When it exits (via 'exit 0'), pane's bash tries to exit but
-        # remain-on-exit=on keeps pane alive. Then EXIT trap fires (in pane's bash),
-        # runs lifecycle (already running as bg) and 'kill $$' kills pane's bash.
-        # Pane closes because process is dead (remain-on-exit doesn't save dead process).
-        lifecycle_chain = f"{cmd_str} || true; {lifecycle_subshell}"  # lifecycle runs after cmd completes
+        # Lifecycle runs after main command completes
+        exit_cmd = shlex.quote(clawteam_bin) if os.path.isabs(clawteam_bin) else "clawteam"
+        lifecycle_subshell = (
+            f"_ec=$?; {exit_cmd} lifecycle on-exit --team {shlex.quote(team_name)} "
+            f"--agent {shlex.quote(agent_name)} --exit-code \"$_ec\"; "
+            f"exit $_ec"
+        )
+        lifecycle_chain = f"{cmd_str} || true; {lifecycle_subshell}"
         # Unset nesting-detection env vars so spawned agents
         # don't refuse to start when the leader is itself a session.
         unset_clause = "unset CLAUDECODE CLAUDE_CODE_ENTRYPOINT CLAUDE_CODE_SESSION OPENCLAW_NESTED 2>/dev/null; "
