@@ -138,13 +138,12 @@ def build_agent_prompt(
         "",
     ])
 
-    # Self-Evaluation + Exit Protocol - streamlined, no pauses
+    # Simple exit - just write exit 0 and close
     lines.extend([
-        "## Self-Evaluation + Exit",
-        "Quick reflection (internal, no pause), then output ONLY:",
-        "exit 0",
         "",
-        "This closes the pane automatically.",
+        "## Done",
+        "Write ONLY: exit 0",
+        "This closes the pane. No pause.",
     ])
 
     # Workflow reminder
