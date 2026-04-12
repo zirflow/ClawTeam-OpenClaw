@@ -2,15 +2,14 @@
 
 ### Fixed
 
-- **EXIT hook now correctly marks tasks as completed** — tasks stuck in `in_progress` forever when agents exited. Fixed across both tmux and subprocess backends.
-  - `tmux_backend.py`: passes `--exit-code $?` via `trap EXIT` shell builtin
+- **EXIT hook now correctly marks tasks as completed** — tasks stuck in `in_progress` forever when agents exited. Root cause: `trap EXIT` in tmux panes does NOT fire (bash exits → tmux pane stays open as idle shell). Fixed with command chaining.
+  - `tmux_backend.py`: new chain `cmd; _ec=$?; lifecycle --exit-code "$_ec"; exit $_ec` — captures agent exit code, calls lifecycle, then exits the tmux pane
   - `subprocess_backend.py`: added monitor thread that calls `proc.wait()` then `lifecycle on-exit --exit-code {code}`
   - `lifecycle.py`: `handle_agent_exit()` now accepts `exit_code` param; `exit_code==0` → `completed`, non-zero → `pending`
   - `cli/commands.py`: `lifecycle_on_exit` command accepts `--exit-code` parameter
-- **prompt.py variable bug**: `\{team\}` (literal) → `\{team_name\}` in agent prompt template — caused malformed coordination prompts
+- **prompt.py**: converted to f-string so `{team_name}`/`{agent_name}` actually interpolate (was literal text in old non-f-string version); added `--owner` flag to all task update steps (EXIT hook relies on owner field to find tasks)
 - **BUG-1**: Force-setting `in_progress` on a blocked task now clears its `blocked_by` list (avoids orphan blocked tasks)
 - **BUG-3**: `_resolve_dependents_unlocked` now uses a resolution manifest for atomic unblocking — crash-safe; replays pending resolutions on store init
-- **prompt.py**: reduced from ~300 lines to ~44 lines by removing BOIDS_RULES, METACOGNITION_BLOCK, and extra sections
 
 ### Changed
 
