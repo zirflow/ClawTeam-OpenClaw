@@ -933,6 +933,18 @@ def task_create(
     """Create a new task (TaskCreate)."""
     from clawteam.team.tasks import TaskStore
 
+    # Clean up tmux pane if this agent was running in tmux
+    tmux_target = f"clawteam-{team}:{agent}"
+    try:
+        subprocess.run(
+            ["tmux", "kill-pane", "-t", tmux_target],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            timeout=5,
+        )
+    except Exception:
+        pass  # Pane might not exist; best-effort
+
     store = TaskStore(team)
     blocks_list = [b.strip() for b in blocks.split(",") if b.strip()] if blocks else []
     blocked_by_list = [b.strip() for b in blocked_by.split(",") if b.strip()] if blocked_by else []

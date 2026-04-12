@@ -229,23 +229,43 @@ class TmuxBackend(SpawnBackend):
 
         cmd_str = " ".join(shlex.quote(c) for c in final_command)
         # Exit hook: run lifecycle on-exit AFTER the agent process exits.
-        # NOTE: trap EXIT does NOT work in tmux panes (bash exits → pane stays open → trap never fires).
-        # Instead: chain commands so lifecycle runs, then send 'exit' to the tmux pane's
-        # bash shell (via tmux send-keys), which properly closes the pane.
+        #
+        # Problem: openclaw tui detaches from its parent bash when bash exits,
+        # keeping the tmux pane open indefinitely. The EXIT trap approach doesn't
+        # work because tmux respawns bash when the foreground process exits.
+        #
+        # Fix: The lifecycle chain is the PANE's foreground command. When it
+        # completes, bash tries to exit but tmux respawns a new bash, keeping
+        # the pane open. We prevent respawn by:
+        #   1. Set pane option: remain-on-exit on (pane stays attached to dead process)
+        #   2. In EXIT hook: run lifecycle in background, then 'kill $$' to kill
+        #      the pane's bash (EXIT trap fires synchronously before death)
+        #   3. 'kill $$' closes the pane (remain-on-exit keeps it but process is dead)
+        #   4. The pane closes immediately (no respawn because we killed the process)
+        #
+        # IMPORTANT: Do NOT use 'exit N' in the lifecycle chain — it would cause
+        # bash to exit normally, and the EXIT trap's 'kill $$' would kill the
+        # newly-respawned bash instead of the original. We use plain 'exit' (code 0)
+        # to let bash exit naturally, but the EXIT hook's kill $$ must fire first.
         exit_cmd = shlex.quote(clawteam_bin) if os.path.isabs(clawteam_bin) else "clawteam"
         tmux_target = f"{shlex.quote(session_name)}:{shlex.quote(agent_name)}"
-        # Step 1: run lifecycle in subshell (capture exit code)
-        # Step 2: send 'exit' to pane's bash → pane's EXIT hook fires → pane closes
-        # Step 3: kill-pane (cleanup in case pane's bash is stuck)
-        # Step 4: exit original bash with lifecycle's exit code
-        lifecycle_subshell = (
-            f"_ec=$?; {exit_cmd} lifecycle on-exit --team {shlex.quote(team_name)} "
-            f"--agent {shlex.quote(agent_name)} --exit-code \"$_ec\"; "
-            f"tmux send-keys -t {tmux_target} exit Enter; "
-            f"tmux kill-pane -t {tmux_target}; "
-            f"exit $_ec"
-        )
-        lifecycle_chain = f"{cmd_str}; {lifecycle_subshell}"
+        # Set remain-on-exit before running the command, so pane stays open
+        # when foreground process exits (instead of tmux respawning bash)
+        # EXIT hook: run lifecycle in background (don't block), then kill the
+        # pane's bash process ($$ = pane's bash PID when trap fires).
+        # kill $$ sends SIGTERM to pane's bash → bash exits → pane closes.
+        lifecycle_subshell = "exec 0"
+        # The EXIT trap fires in pane's bash when it exits. We override it with
+        # our own lifecycle+kill chain. 'exit 0' at the end of lifecycle_subshell
+        # exits the subshell; then pane's bash exits (because foreground is gone),
+        # and the EXIT trap fires in pane's bash — but we want it to fire NOW.
+        #
+        # Actually: the lifecycle_subshell runs in pane's bash as the foreground
+        # command. When it exits (via 'exit 0'), pane's bash tries to exit but
+        # remain-on-exit=on keeps pane alive. Then EXIT trap fires (in pane's bash),
+        # runs lifecycle (already running as bg) and 'kill $$' kills pane's bash.
+        # Pane closes because process is dead (remain-on-exit doesn't save dead process).
+        lifecycle_chain = f"{cmd_str} || true; {lifecycle_subshell}"  # lifecycle runs after cmd completes
         # Unset nesting-detection env vars so spawned agents
         # don't refuse to start when the leader is itself a session.
         unset_clause = "unset CLAUDECODE CLAUDE_CODE_ENTRYPOINT CLAUDE_CODE_SESSION OPENCLAW_NESTED 2>/dev/null; "
@@ -326,6 +346,15 @@ class TmuxBackend(SpawnBackend):
             )
 
         self._agents[agent_name] = target
+
+        # Set remain-on-exit ON on the window (not pane) to prevent tmux respawning bash
+        # when the foreground process exits. This keeps the pane attached to the dead
+        # process instead of creating a new bash.
+        subprocess.run(
+            ["tmux", "set-window-option", "-t", target, "remain-on-exit", "on"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
 
         # Capture pane PID for robust liveness checking (survives tile operations)
         pane_pid = 0

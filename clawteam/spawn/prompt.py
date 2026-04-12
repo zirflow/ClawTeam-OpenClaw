@@ -113,7 +113,8 @@ def build_agent_prompt(
         "## Exit Protocol",
         "When all steps above are complete, you MUST:",
         "Write the following line as your FINAL response line (nothing after it):",
-        "exit 0",
+        "exit 0",  # VERY IMPORTANT: This must be your LAST output to close the tmux pane!
+        # Do NOT output anything after this. Your session will auto-close after this line.",
         "",
     ])
 
