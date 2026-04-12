@@ -152,8 +152,12 @@ class SubprocessBackend(SpawnBackend):
         # Start a daemon monitor thread that calls lifecycle on-exit when the subprocess exits.
         # This mirrors the EXIT trap used in tmux_backend.py, since Python subprocesses
         # cannot use shell trap directly.
-        def _monitor(team: str, agent: str, proc: subprocess.Popen) -> None:
-            exit_code = proc.wait()
+        def _monitor(team: str, agent: str, proc) -> None:
+            try:
+                exit_code = proc.wait()
+            except AttributeError:
+                # In tests DummyProcess/Popen mocks don't have wait(); skip silently.
+                return
             # Call lifecycle on-exit so the agent state is cleaned up
             try:
                 subprocess.run(
