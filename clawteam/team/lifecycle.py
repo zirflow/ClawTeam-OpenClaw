@@ -141,8 +141,15 @@ def _notify_gateway_shutdown(agent_name: str, team_name: str) -> None:
         logger.debug("Gateway shutdown notification failed (best-effort): %s", exc)
 
 
-def handle_agent_exit(team_name: str, agent_name: str) -> dict[str, Any] | None:
-    """Reset abandoned tasks and notify the leader when an agent exits."""
+def handle_agent_exit(team_name: str, agent_name: str, exit_code: int | None = None) -> dict[str, Any] | None:
+    """Reset abandoned tasks and notify the leader when an agent exits.
+
+    Args:
+        team_name: Name of the team.
+        agent_name: Name of the agent that exited.
+        exit_code: Exit code of the agent process. 0 = normal exit (mark completed),
+                   non-zero = crash/timeout (reset to pending for retry).
+    """
     from clawteam.team.manager import TeamManager
     from clawteam.team.models import TaskStatus
     from clawteam.team.tasks import TaskStore
@@ -158,23 +165,39 @@ def handle_agent_exit(team_name: str, agent_name: str) -> dict[str, Any] | None:
         return None
 
     for task in abandoned:
-        store.update(task.id, status=TaskStatus.pending)
+        if exit_code == 0:
+            store.update(task.id, status=TaskStatus.completed)
+        else:
+            store.update(task.id, status=TaskStatus.pending)
 
+    normal_exit = (exit_code == 0)
     leader_name = TeamManager.get_leader_name(team_name)
     if leader_name:
         mailbox = MailboxManager(team_name)
         task_subjects = ", ".join(task.subject for task in abandoned)
-        mailbox.send(
-            from_agent=agent_name,
-            to=leader_name,
-            content=(
-                f"Agent '{agent_name}' exited unexpectedly. "
-                f"Reset {len(abandoned)} task(s) to pending: {task_subjects}"
-            ),
-        )
+        if normal_exit:
+            mailbox.send(
+                from_agent=agent_name,
+                to=leader_name,
+                content=(
+                    f"Agent '{agent_name}' exited normally (code={exit_code}). "
+                    f"Marked {len(abandoned)} task(s) as completed: {task_subjects}"
+                ),
+            )
+        else:
+            mailbox.send(
+                from_agent=agent_name,
+                to=leader_name,
+                content=(
+                    f"Agent '{agent_name}' exited unexpectedly (code={exit_code}). "
+                    f"Reset {len(abandoned)} task(s) to pending: {task_subjects}"
+                ),
+            )
 
+    status_key = "agent_exited_normally" if normal_exit else "agent_exited"
+    tasks_key = "completed_tasks" if normal_exit else "abandoned_tasks"
     return {
-        "status": "agent_exited",
+        "status": status_key,
         "agent": agent_name,
-        "abandoned_tasks": [{"id": task.id, "subject": task.subject} for task in abandoned],
+        tasks_key: [{"id": task.id, "subject": task.subject} for task in abandoned],
     }

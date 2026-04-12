@@ -218,24 +218,81 @@ clawteam spawn -t <team> -n tester --task "Write and run integration tests"
 **IMPORTANT**: Start monitoring immediately after spawning — do NOT wait for the user to ask for status updates. Run the monitor loop in the background right away so you can:
 1. **Push mid-progress updates proactively** — when ~50% of tasks complete, send the user a brief status update (e.g. "4/7 agents done, 3 still working"). Do NOT wait for them to ask.
 2. **Deliver final results immediately** when all tasks complete.
+3. **Keep workers fed** — detect idle workers with pending tasks and send continuation instructions.
 
 ```bash
 # Poll task status every 30-60 seconds
 while true; do
-  clawteam --json task list <team> | python3 -c "
+  # Get task status
+  TASK_STATUS=$(clawteam task list <team> --json 2>/dev/null | python3 -c "
 import sys, json
 tasks = json.load(sys.stdin)
 done = sum(1 for t in tasks if t['status'] == 'completed')
+pending = sum(1 for t in tasks if t['status'] == 'pending')
+in_progress = sum(1 for t in tasks if t['status'] == 'in_progress')
 total = len(tasks)
-print(f'{done}/{total} complete')
-if done == total: print('ALL DONE'); sys.exit(0)
-"
+print(f'DONE={done} PENDING={pending} IN_PROGRESS={in_progress} TOTAL={total}')
+")
+  echo "$TASK_STATUS"
+  
   # Check for messages from workers
   clawteam inbox receive <team>
-  # IMPORTANT: Send a mid-progress update to the user when roughly half the tasks are done
+  
+  # Send mid-progress update when roughly half the tasks are done
+  DONE=$(echo "$TASK_STATUS" | grep -oP 'DONE=\K\d+')
+  TOTAL=$(echo "$TASK_STATUS" | grep -oP 'TOTAL=\K\d+')
+  if [ "$DONE" -ge $((TOTAL / 2)) ] && [ "$DONE" -lt "$TOTAL" ]; then
+    echo "[Monitor] Mid-progress: $DONE/$TOTAL complete — pushing update"
+    # Send update to user via feishu message tool
+    # (handled by the agent — not a CLI command)
+  fi
+  
+  # CRITICAL: If workers are idle (inbox empty) but pending tasks exist,
+  # send continuation instructions. Workers go idle when their inbox is empty
+  # after completing a task — they need explicit instruction to continue.
+  PENDING=$(echo "$TASK_STATUS" | grep -oP 'PENDING=\K\d+')
+  IN_PROGRESS=$(echo "$TASK_STATUS" | grep -oP 'IN_PROGRESS=\K\d+')
+  if [ "$PENDING" -gt 0 ] && [ "$IN_PROGRESS" -eq 0 ]; then
+    echo "[Monitor] Workers idle but $PENDING tasks pending — sending continuation"
+    # Get list of pending tasks
+    PENDING_TASKS=$(clawteam task list <team> --json 2>/dev/null | python3 -c "
+import sys, json
+tasks = json.load(sys.stdin)
+for t in tasks:
+  if t['status'] == 'pending':
+    print(f\"ID={t['id']} SUBJECT={t['subject'][:40]}\")
+")
+    echo "Pending tasks:"
+    echo "$PENDING_TASKS"
+    # Send message to leader's inbox instructing workers to self-assign
+    clawteam inbox send <team> leader "[AUTO] $PENDING tasks still pending. " \
+      "Send continuation instructions to workers to pick up: $PENDING_TASKS"
+    # Send continuation to each idle worker (they check inbox on idle)
+    for worker in <agent1> <agent2> ...; do
+      NEXT_TASK=$(clawteam task list <team> --json 2>/dev/null | python3 -c "
+import sys, json
+tasks = json.load(sys.stdin)
+for t in tasks:
+  if t['status'] == 'pending' and not t.get('owner'):
+    print(t['id'])
+    break
+" 2>/dev/null)
+      if [ -n "$NEXT_TASK" ]; then
+        clawteam inbox send <team> leader $worker \
+          "CONTINUE: Assign task $NEXT_TASK to yourself and start working."
+      fi
+    done
+  fi
+  
+  if [ "$DONE" -eq "$TOTAL" ] && [ "$TOTAL" -gt 0 ]; then
+    echo "[Monitor] All $TOTAL tasks complete — converging"
+    break
+  fi
   sleep 30
 done
 ```
+
+**Key coordination fix**: Workers go idle after completing a task (inbox empty → they call `lifecycle idle`). The leader MUST send continuation instructions via inbox when pending tasks exist. Without this, workers sit idle forever.
 
 ### Phase 5: Converge & Report
 

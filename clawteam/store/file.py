@@ -30,6 +30,16 @@ def _tasks_root(team_name: str) -> Path:
     return d
 
 
+def _team_dir(team_name: str) -> Path:
+    from clawteam.paths import ensure_within_root as _eur, validate_identifier as _vi
+    from clawteam.team.manager import _teams_root as _tr
+    return _eur(_tr(), _vi(team_name, "team name"))
+
+
+def _resolution_manifest_path(team_name: str, task_id: str) -> Path:
+    return _team_dir(team_name) / f"resolution-{task_id}.json"
+
+
 def _task_path(team_name: str, task_id: str) -> Path:
     return _tasks_root(team_name) / f"task-{task_id}.json"
 
@@ -43,6 +53,10 @@ def _now_iso() -> str:
 
 
 class FileTaskStore(BaseTaskStore):
+
+    def __init__(self, team_name: str):
+        super().__init__(team_name)
+        self._replay_pending_resolutions()
     """Task store backed by the local filesystem.
 
     Each task is stored as a separate JSON file:
@@ -172,6 +186,10 @@ class FileTaskStore(BaseTaskStore):
 
             if status is not None:
                 task.status = status
+                # BUG-1 fix: force-setting a blocked task to in_progress implies
+                # the operator wants to skip the dependency, so clear blocked_by
+                if status == TaskStatus.in_progress and task.blocked_by:
+                    task.blocked_by = []
             if owner is not None:
                 task.owner = owner
             if subject is not None:
@@ -324,17 +342,85 @@ class FileTaskStore(BaseTaskStore):
             Path(tmp_name).unlink(missing_ok=True)
             raise
 
+    # ------------------------------------------------------------------ #
+    # Resolution manifest (atomic dependent unblocking)                        #
+    # ------------------------------------------------------------------ #
+
+    def _begin_resolution_manifest(
+        self, completed_task_id: str, dependent_ids: list[str]
+    ) -> None:
+        """Write a resolution manifest so the operation can be replayed on crash."""
+        path = _resolution_manifest_path(self.team_name, completed_task_id)
+        payload = {
+            "completed_task_id": completed_task_id,
+            "dependent_ids": dependent_ids,
+            "timestamp": _now_iso(),
+        }
+        path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+
+    def _complete_resolution(self, completed_task_id: str) -> None:
+        """Delete the manifest to signal successful completion."""
+        path = _resolution_manifest_path(self.team_name, completed_task_id)
+        path.unlink(missing_ok=True)
+
     def _resolve_dependents_unlocked(self, completed_task_id: str) -> None:
+        # Collect all dependent task IDs first (before any saves)
+        dependent_ids: list[str] = []
         root = _tasks_root(self.team_name)
         for f in root.glob("task-*.json"):
             try:
                 data = json.loads(f.read_text(encoding="utf-8"))
                 task = TaskItem.model_validate(data)
                 if completed_task_id in task.blocked_by:
+                    dependent_ids.append(task.id)
+            except (json.JSONDecodeError, OSError, ValueError):
+                continue
+
+        if not dependent_ids:
+            return
+
+        # Write manifest before any saves (allows replay on crash)
+        self._begin_resolution_manifest(completed_task_id, dependent_ids)
+
+        try:
+            for task_id in dependent_ids:
+                task = self._get_unlocked(task_id)
+                if task is None:
+                    continue
+                if completed_task_id in task.blocked_by:
                     task.blocked_by.remove(completed_task_id)
                     if not task.blocked_by and task.status == TaskStatus.blocked:
                         task.status = TaskStatus.pending
                     task.updated_at = _now_iso()
                     self._save_unlocked(task)
+        finally:
+            # Delete manifest only after all saves succeed
+            self._complete_resolution(completed_task_id)
+
+    def _replay_pending_resolutions(self) -> None:
+        """Replay any orphaned resolution manifests left over from a crashed process."""
+        team_dir = _team_dir(self.team_name)
+        for f in team_dir.glob("resolution-*.json"):
+            try:
+                data = json.loads(f.read_text(encoding="utf-8"))
+                completed_id = data.get("completed_task_id", "")
+                dependent_ids = data.get("dependent_ids", [])
+                if not completed_id or not dependent_ids:
+                    f.unlink(missing_ok=True)
+                    continue
+                # Re-resolve: run the unblocking logic for each dependent
+                for task_id in dependent_ids:
+                    task = self._get_unlocked(task_id)
+                    if task is None:
+                        continue
+                    if completed_id in task.blocked_by:
+                        task.blocked_by.remove(completed_id)
+                        if not task.blocked_by and task.status == TaskStatus.blocked:
+                            task.status = TaskStatus.pending
+                        task.updated_at = _now_iso()
+                        self._save_unlocked(task)
+                f.unlink(missing_ok=True)
             except (json.JSONDecodeError, OSError, ValueError):
+                # Corrupt manifest – remove it
+                f.unlink(missing_ok=True)
                 continue

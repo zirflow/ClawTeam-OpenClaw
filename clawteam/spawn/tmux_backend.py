@@ -232,7 +232,7 @@ class TmuxBackend(SpawnBackend):
         exit_cmd = shlex.quote(clawteam_bin) if os.path.isabs(clawteam_bin) else "clawteam"
         exit_hook = (
             f"{exit_cmd} lifecycle on-exit --team {shlex.quote(team_name)} "
-            f"--agent {shlex.quote(agent_name)}"
+            f"--agent {shlex.quote(agent_name)} --exit-code " r"\$?"
         )
         # Unset nesting-detection env vars so spawned agents
         # don't refuse to start when the leader is itself a session.

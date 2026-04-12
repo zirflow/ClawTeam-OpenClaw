@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 import subprocess
 import sys
+import threading
 
 from clawteam.spawn.base import SpawnBackend
 from clawteam.spawn.cli_env import (
@@ -147,6 +148,34 @@ class SubprocessBackend(SpawnBackend):
             cwd=cwd,
         )
         self._processes[agent_name] = process
+
+        # Start a daemon monitor thread that calls lifecycle on-exit when the subprocess exits.
+        # This mirrors the EXIT trap used in tmux_backend.py, since Python subprocesses
+        # cannot use shell trap directly.
+        def _monitor(team: str, agent: str, proc: subprocess.Popen) -> None:
+            exit_code = proc.wait()
+            # Call lifecycle on-exit so the agent state is cleaned up
+            try:
+                subprocess.run(
+                    [
+                        sys.executable, "-m", "clawteam", "lifecycle", "on-exit",
+                        "--team", team,
+                        "--agent", agent,
+                        "--exit-code", str(exit_code),
+                    ],
+                    env=os.environ.copy(),
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    timeout=30,
+                )
+            except Exception:
+                pass  # Best-effort: don't crash the monitor thread
+            finally:
+                # Clean up the process record
+                self._processes.pop(agent, None)
+
+        monitor = threading.Thread(target=_monitor, args=(team_name, agent_name, process), daemon=True)
+        monitor.start()
 
         # Persist spawn info for liveness checking
         from clawteam.spawn.registry import register_agent

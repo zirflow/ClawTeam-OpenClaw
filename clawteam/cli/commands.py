@@ -1718,10 +1718,13 @@ def lifecycle_idle(
 def lifecycle_on_exit(
     team: str = typer.Option(..., "--team", "-t", help="Team name"),
     agent: str = typer.Option(..., "--agent", "-n", help="Agent name"),
+    exit_code: int = typer.Option(1, "--exit-code", help="Exit code of the agent process (0=normal, non-zero=crashed)"),
 ):
     """Handle agent process exit: clean up session and reset in_progress tasks.
 
     This is called automatically as a post-exit hook when an agent process terminates.
+    If exit_code is 0 (normal exit), in_progress tasks are marked as completed.
+    If exit_code is non-zero (crash/timeout), tasks are reset to pending for retry.
     """
     import subprocess
 
@@ -1774,8 +1777,13 @@ def lifecycle_on_exit(
         # Registry cleanup has already happened above.
         return
 
+    # Determine final task status based on exit code:
+    # exit_code == 0 → normal exit, mark tasks as completed
+    # exit_code != 0 → crash/timeout, reset to pending for retry
+    normal_exit = (exit_code == 0)
+    final_status = TaskStatus.completed if normal_exit else TaskStatus.pending
     for t in abandoned:
-        store.update(t.id, status=TaskStatus.pending)
+        store.update(t.id, status=final_status)
 
     exit_detail = ""
     info = get_agent_info(team, agent)
@@ -1800,12 +1808,34 @@ def lifecycle_on_exit(
     if leader_name:
         mailbox = MailboxManager(team)
         task_subjects = ", ".join(t.subject for t in abandoned)
-        mailbox.send(
-            from_agent=agent,
-            to=leader_name,
-            content=f"Agent '{agent}' exited unexpectedly. "
-                    f"Reset {len(abandoned)} task(s) to pending: {task_subjects}.{exit_detail}",
+        if normal_exit:
+            mailbox.send(
+                from_agent=agent,
+                to=leader_name,
+                content=f"Agent '{agent}' exited normally. "
+                        f"Marked {len(abandoned)} task(s) as completed: {task_subjects}.",
+            )
+        else:
+            mailbox.send(
+                from_agent=agent,
+                to=leader_name,
+                content=f"Agent '{agent}' exited unexpectedly (exit_code={exit_code}). "
+                        f"Reset {len(abandoned)} task(s) to pending: {task_subjects}.{exit_detail}",
+            )
+
+    if normal_exit:
+        _output(
+            {
+                "status": "agent_exited_normally",
+                "agent": agent,
+                "completed_tasks": [{"id": t.id, "subject": t.subject} for t in abandoned],
+            },
+            lambda d: console.print(
+                f"[green]Agent '{agent}' exited normally.[/green] "
+                f"Marked {len(d['completed_tasks'])} task(s) as completed."
+            ),
         )
+        return
 
     _output(
         {
@@ -1814,7 +1844,7 @@ def lifecycle_on_exit(
             "abandoned_tasks": [{"id": t.id, "subject": t.subject} for t in abandoned],
         },
         lambda d: console.print(
-            f"[yellow]Agent '{agent}' exited.[/yellow] "
+            f"[yellow]Agent '{agent}' exited unexpectedly.[/yellow] "
             f"Reset {len(d['abandoned_tasks'])} task(s) to pending."
         ),
     )
