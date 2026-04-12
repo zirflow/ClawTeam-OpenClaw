@@ -230,15 +230,22 @@ class TmuxBackend(SpawnBackend):
         cmd_str = " ".join(shlex.quote(c) for c in final_command)
         # Exit hook: run lifecycle on-exit AFTER the agent process exits.
         # NOTE: trap EXIT does NOT work in tmux panes (bash exits → pane stays open → trap never fires).
-        # Instead: chain commands with && so lifecycle runs after cmd, then exit.
+        # Instead: chain commands so lifecycle runs, then send 'exit' to the tmux pane's
+        # bash shell (via tmux send-keys), which properly closes the pane.
         exit_cmd = shlex.quote(clawteam_bin) if os.path.isabs(clawteam_bin) else "clawteam"
-        # Chain: run agent cmd → capture its exit code → call lifecycle → exit pane.
-        # "$_ec" in double quotes expands to the exit code captured after cmd exits.
-        exit_hook = (
-            f"{exit_cmd} lifecycle on-exit --team {shlex.quote(team_name)} "
-            f"--agent {shlex.quote(agent_name)} --exit-code \"$_ec\""
+        tmux_target = f"{shlex.quote(session_name)}:{shlex.quote(agent_name)}"
+        # Step 1: run lifecycle in subshell (capture exit code)
+        # Step 2: send 'exit' to pane's bash → pane's EXIT hook fires → pane closes
+        # Step 3: kill-pane (cleanup in case pane's bash is stuck)
+        # Step 4: exit original bash with lifecycle's exit code
+        lifecycle_subshell = (
+            f"_ec=$?; {exit_cmd} lifecycle on-exit --team {shlex.quote(team_name)} "
+            f"--agent {shlex.quote(agent_name)} --exit-code \"$_ec\"; "
+            f"tmux send-keys -t {tmux_target} exit Enter; "
+            f"tmux kill-pane -t {tmux_target}; "
+            f"exit $_ec"
         )
-        lifecycle_chain = f"{cmd_str}; _ec=$?; {exit_hook}; exit $_ec"
+        lifecycle_chain = f"{cmd_str}; {lifecycle_subshell}"
         # Unset nesting-detection env vars so spawned agents
         # don't refuse to start when the leader is itself a session.
         unset_clause = "unset CLAUDECODE CLAUDE_CODE_ENTRYPOINT CLAUDE_CODE_SESSION OPENCLAW_NESTED 2>/dev/null; "

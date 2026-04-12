@@ -110,6 +110,11 @@ def build_agent_prompt(
         f"3. Notify leader: clawteam inbox send {team_name} {leader_name} 'Task done.'",
         f"4. On exit: clawteam lifecycle on-exit --team {team_name} --agent {agent_name} --exit-code 0",
         "",
+        "## Exit Protocol",
+        "When all steps above are complete, you MUST:",
+        "Write the following line as your FINAL response line (nothing after it):",
+        "exit 0",
+        "",
     ])
 
     # Self-Evaluation (always present) — includes confidence scoring
