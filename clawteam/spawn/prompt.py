@@ -121,34 +121,18 @@ def build_agent_prompt(
         "",
     ])
 
-    # Coordination Protocol (always present)
-    lines.extend([
-        "## Coordination Protocol",
-        "After completing your work:",
-        f"1. Run: clawteam task list {team_name} --owner {agent_name}",
-        f"2. Mark completed: clawteam task update <id> --status completed --owner {agent_name}",
-        f"3. Notify leader: clawteam inbox send {team_name} {leader_name} 'Task done.'",
-        f"4. On exit: clawteam lifecycle on-exit --team {team_name} --agent {agent_name} --exit-code 0",
-        "",
-        "## Exit Protocol",
-        "When all steps above are complete, you MUST:",
-        "Write the following line as your FINAL response line (nothing after it):",
-        "exit 0",  # VERY IMPORTANT: This must be your LAST output to close the tmux pane!
-        # Do NOT output anything after this. Your session will auto-close after this line.",
-        "",
-    ])
-
-    # Simple exit - just write exit 0 and close
+    # Coordination Protocol + Exit (always present)
+    # NOTE: "exit 0" must be the VERY LAST line the agent outputs.
+    # Nothing (no text, no section header, no instruction) may follow "exit 0".
     lines.extend([
         "",
-        "## Done",
-        "Write ONLY: exit 0",
-        "This closes the pane. No pause.",
-    ])
-
-    # Workflow reminder
-    lines.extend([
-        f"Be concise. Write results to /tmp/{team_name}/{agent_name}-output.md",
+        "After completing your work, run these commands in order:",
+        f"clawteam task list {team_name} --owner {agent_name}",
+        f"clawteam task update <id> --status completed --owner {agent_name}",
+        f"clawteam inbox send {team_name} {leader_name} 'Task done.'",
+        f"clawteam lifecycle on-exit --team {team_name} --agent {agent_name} --exit-code 0",
+        "",
+        "exit 0",
     ])
 
     return "\n".join(lines)
