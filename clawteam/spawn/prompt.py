@@ -106,7 +106,7 @@ def build_agent_prompt(
         "## Coordination Protocol",
         "After completing your work:",
         f"1. Run: clawteam task list {team_name} --owner {agent_name}",
-        f"2. Mark completed: clawteam task update {team_name} <id> --status completed --owner {agent_name}",
+        f"2. Mark completed: clawteam task update <id> --status completed --owner {agent_name}",
         f"3. Notify leader: clawteam inbox send {team_name} {leader_name} 'Task done.'",
         f"4. On exit: clawteam lifecycle on-exit --team {team_name} --agent {agent_name} --exit-code 0",
         "",
