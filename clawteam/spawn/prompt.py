@@ -118,14 +118,13 @@ def build_agent_prompt(
         "",
     ])
 
-    # Self-Evaluation (always present) — includes confidence scoring
+    # Self-Evaluation + Exit Protocol - streamlined, no pauses
     lines.extend([
-        "## Self-Evaluation",
-        "Before completing, reflect:",
-        "- Did you achieve the mission?",
-        "- Are there open issues?",
-        f"Rate your confidence: [confidence: 0.X] (if confidence < 0.6, flag this for leader).",
+        "## Self-Evaluation + Exit",
+        "Quick reflection (internal, no pause), then output ONLY:",
+        "exit 0",
         "",
+        "This closes the pane automatically.",
     ])
 
     # Workflow reminder
