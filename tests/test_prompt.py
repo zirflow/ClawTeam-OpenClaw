@@ -145,21 +145,3 @@ class TestBuildAgentPrompt:
             team_size=2,
         )
         assert prompt.index("## Coordination Rules") < prompt.index("## Task")
-
-    # --- Metacognitive self-evaluation ---
-
-    def test_metacognition_block_present(self):
-        prompt = build_agent_prompt(
-            agent_name="w", agent_id="id", agent_type="t",
-            team_name="team", leader_name="lead", task="task",
-        )
-        assert "## Self-Evaluation" in prompt
-        assert "[confidence: 0.X]" in prompt
-        assert "confidence < 0.6" in prompt
-
-    def test_metacognition_after_coordination(self):
-        prompt = build_agent_prompt(
-            agent_name="w", agent_id="id", agent_type="t",
-            team_name="team", leader_name="lead", task="task",
-        )
-        assert prompt.index("## Coordination Protocol") < prompt.index("## Self-Evaluation")

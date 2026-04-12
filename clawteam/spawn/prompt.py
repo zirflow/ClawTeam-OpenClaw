@@ -1,4 +1,4 @@
-"""Agent prompt builder — full worker prompt with mission, coordination, self-evaluation."""
+"""Agent prompt builder — full worker prompt with mission and coordination."""
 
 
 def build_agent_prompt(
@@ -27,7 +27,7 @@ def build_agent_prompt(
     - Coordination Rules (if team_size > 1)  → ## Coordination Rules (+ Boundary)
     - Task                                  → ## Task
     - Coordination Protocol (always)         → ## Coordination Protocol (+ task list)
-    - Self-Evaluation (always)               → ## Self-Evaluation (+ confidence scoring)
+
     """
     if constraints is None:
         constraints = []
