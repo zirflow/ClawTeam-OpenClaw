@@ -1,3 +1,29 @@
+## [0.3.1+openclaw1] - 2026-04-12
+
+### Fixed
+
+- **EXIT hook now correctly marks tasks as completed** — tasks stuck in `in_progress` forever when agents exited. Fixed across both tmux and subprocess backends.
+  - `tmux_backend.py`: passes `--exit-code $?` via `trap EXIT` shell builtin
+  - `subprocess_backend.py`: added monitor thread that calls `proc.wait()` then `lifecycle on-exit --exit-code {code}`
+  - `lifecycle.py`: `handle_agent_exit()` now accepts `exit_code` param; `exit_code==0` → `completed`, non-zero → `pending`
+  - `cli/commands.py`: `lifecycle_on_exit` command accepts `--exit-code` parameter
+- **prompt.py variable bug**: `\{team\}` (literal) → `\{team_name\}` in agent prompt template — caused malformed coordination prompts
+- **BUG-1**: Force-setting `in_progress` on a blocked task now clears its `blocked_by` list (avoids orphan blocked tasks)
+- **BUG-3**: `_resolve_dependents_unlocked` now uses a resolution manifest for atomic unblocking — crash-safe; replays pending resolutions on store init
+- **prompt.py**: reduced from ~300 lines to ~44 lines by removing BOIDS_RULES, METACOGNITION_BLOCK, and extra sections
+
+### Changed
+
+- **Phase 4 Monitor Loop** in SKILL.md: leader now proactively sends continuation instructions to idle workers when pending tasks exist (previously workers sat idle forever after completing first task, waiting for inbox messages that never came)
+- **subprocess_backend.py**: added EXIT hook parity with tmux_backend (both backends now handle lifecycle cleanup)
+- xiaoch cron jobs: changed `isolated` → `shared` sessionTarget for 3 jobs (isolated sessions lack Feishu OAuth tokens, causing 400 errors on Feishu delivery)
+
+### Known Issues (Partial)
+
+- Event log files (`evt-*.json`) grow unbounded — no rotation
+- Workspace merge conflicts produce raw stderr only, no structured conflict data
+- Join approval race: approval message written to `_pending_*` temp inbox before `shutil.rmtree()` — low probability
+
 # Changelog
 
 All notable changes to ClawTeam-OpenClaw are documented here.
