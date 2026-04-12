@@ -293,7 +293,19 @@ class TmuxBackend(SpawnBackend):
 
         if launch.returncode != 0:
             stderr = launch.stderr.decode() if isinstance(launch.stderr, bytes) else launch.stderr
-            return f"Error: failed to launch tmux session: {(stderr or '').strip()}"
+            # Concurrent spawn race: if new-session fails with "duplicate session",
+            # the session was created by another concurrent spawn. Fall back to new-window.
+            if "duplicate session" in (stderr or ""):
+                launch = subprocess.run(
+                    ["tmux", "new-window", "-t", session_name, "-n", agent_name, full_cmd],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                )
+                if launch.returncode != 0:
+                    stderr2 = launch.stderr.decode() if isinstance(launch.stderr, bytes) else launch.stderr
+                    return f"Error: failed to launch tmux window: {(stderr2 or '').strip()}"
+            else:
+                return f"Error: failed to launch tmux session: {(stderr or '').strip()}"
 
         from clawteam.config import load_config
 
