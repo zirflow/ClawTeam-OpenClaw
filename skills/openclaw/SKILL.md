@@ -64,7 +64,7 @@ clawteam board serve --port 8080   # Web dashboard
 |---------|-------------|
 | `clawteam task create <team> "<subject>" -o <owner> [-d "<desc>"] [--blocked-by <id>]` | Create task |
 | `clawteam task list <team> [--owner <name>]` | List tasks (filterable) |
-| `clawteam task update <team> <id> --status <status>` | Update status |
+| `clawteam task update <team> <id> --status <status> --owner <name>` | Update status (set owner so EXIT hook can find task) |
 | `clawteam task get <team> <id>` | Get single task |
 | `clawteam task stats <team>` | Timing statistics |
 | `clawteam task wait <team>` | Block until all tasks complete |
