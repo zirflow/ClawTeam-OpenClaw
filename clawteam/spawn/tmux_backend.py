@@ -228,19 +228,24 @@ class TmuxBackend(SpawnBackend):
             final_command.extend(["-p", prompt])
 
         cmd_str = " ".join(shlex.quote(c) for c in final_command)
-        # Append on-exit hook: runs immediately when agent process exits
+        # Exit hook: run lifecycle on-exit AFTER the agent process exits.
+        # NOTE: trap EXIT does NOT work in tmux panes (bash exits → pane stays open → trap never fires).
+        # Instead: chain commands with && so lifecycle runs after cmd, then exit.
         exit_cmd = shlex.quote(clawteam_bin) if os.path.isabs(clawteam_bin) else "clawteam"
+        # Chain: run agent cmd → capture its exit code → call lifecycle → exit pane.
+        # "$_ec" in double quotes expands to the exit code captured after cmd exits.
         exit_hook = (
             f"{exit_cmd} lifecycle on-exit --team {shlex.quote(team_name)} "
-            f"--agent {shlex.quote(agent_name)} --exit-code " r"\$?"
+            f"--agent {shlex.quote(agent_name)} --exit-code \"$_ec\""
         )
+        lifecycle_chain = f"{cmd_str}; _ec=$?; {exit_hook}; exit $_ec"
         # Unset nesting-detection env vars so spawned agents
         # don't refuse to start when the leader is itself a session.
         unset_clause = "unset CLAUDECODE CLAUDE_CODE_ENTRYPOINT CLAUDE_CODE_SESSION OPENCLAW_NESTED 2>/dev/null; "
         if cwd:
-            full_cmd = f"{unset_clause}{export_str}; cd {shlex.quote(cwd)} && trap \"{exit_hook}\" EXIT; {cmd_str}"
+            full_cmd = f"{unset_clause}{export_str}; cd {shlex.quote(cwd)} && {lifecycle_chain}"
         else:
-            full_cmd = f"{unset_clause}{export_str}; trap \"{exit_hook}\" EXIT; {cmd_str}"
+            full_cmd = f"{unset_clause}{export_str}; {lifecycle_chain}"
 
         # Check if tmux session exists
         check = subprocess.run(
