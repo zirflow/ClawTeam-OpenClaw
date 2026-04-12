@@ -15,13 +15,16 @@ def _make_tmux_mocks(monkeypatch, captured: dict, *, tmux_ok: bool = True, agent
     monkeypatch.setattr("clawteam.spawn.tmux_backend._openclaw_supports_agent_flag", lambda: agent_flag_supported)
 
     def fake_run(cmd, **kwargs):
-        result = MagicMock()
-        result.returncode = 0
-        result.stdout = "pane-id\n" if "list-panes" in cmd else b""
-        result.stderr = b""
+        if "list-panes" in cmd:
+            stdout = "pane-id\n"
+        elif "capture-pane" in cmd:
+            # Return a ready hint so _wait_for_tui_ready doesn't loop forever
+            stdout = "> "
+        else:
+            stdout = ""
+        result = type("Result", (), {"returncode": 0, "stdout": stdout, "stderr": ""})()
         captured.setdefault("runs", []).append(cmd)
         if "new-session" in cmd or "new-window" in cmd:
-            # Capture the full command string for assertion
             captured["spawn_cmd"] = cmd
         return result
 
