@@ -351,6 +351,7 @@ class FileTaskStore(BaseTaskStore):
     ) -> None:
         """Write a resolution manifest so the operation can be replayed on crash."""
         path = _resolution_manifest_path(self.team_name, completed_task_id)
+        path.parent.mkdir(parents=True, exist_ok=True)
         payload = {
             "completed_task_id": completed_task_id,
             "dependent_ids": dependent_ids,

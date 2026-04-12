@@ -778,7 +778,7 @@ def test_tmux_backend_gemini_skip_permissions_and_prompt(monkeypatch, tmp_path):
 
     new_session = next(call for call in run_calls if call[:3] == ["tmux", "new-session", "-d"])
     full_cmd = new_session[-1]
-    assert "trap \"" in full_cmd and "gemini --yolo -p 'analyze this repo'" in full_cmd
+    assert "lifecycle on-exit" in full_cmd and "gemini --yolo -p 'analyze this repo'" in full_cmd
 
 
 def test_subprocess_backend_gemini_skip_permissions_and_prompt(monkeypatch, tmp_path):
@@ -897,7 +897,7 @@ def test_tmux_backend_kimi_skip_permissions_workspace_and_prompt(monkeypatch, tm
 
     new_session = next(call for call in run_calls if call[:3] == ["tmux", "new-session", "-d"])
     full_cmd = new_session[-1]
-    assert "trap \"" in full_cmd and "kimi --yolo -w /tmp/demo --print -p 'fix the bug'" in full_cmd
+    assert "lifecycle on-exit" in full_cmd and "kimi --yolo -w /tmp/demo --print -p 'fix the bug'" in full_cmd
 
 
 def test_subprocess_backend_kimi_skip_permissions_workspace_and_prompt(monkeypatch, tmp_path):
@@ -1163,7 +1163,7 @@ def test_tmux_backend_qwen_skip_permissions_and_prompt(monkeypatch, tmp_path):
     assert "spawned" in result
     new_session = next(c for c in run_calls if c[:3] == ["tmux", "new-session", "-d"])
     full_cmd = new_session[-1]
-    assert "trap \"" in full_cmd and "qwen --dangerously-skip-permissions -p 'refactor this'" in full_cmd
+    assert "lifecycle on-exit" in full_cmd and "qwen --dangerously-skip-permissions -p 'refactor this'" in full_cmd
 
 
 def test_tmux_backend_opencode_skip_permissions_and_prompt(monkeypatch, tmp_path):
@@ -1184,7 +1184,7 @@ def test_tmux_backend_opencode_skip_permissions_and_prompt(monkeypatch, tmp_path
     assert "spawned" in result
     new_session = next(c for c in run_calls if c[:3] == ["tmux", "new-session", "-d"])
     full_cmd = new_session[-1]
-    assert "trap \"" in full_cmd and "opencode --yolo -p 'fix the bug'" in full_cmd
+    assert "lifecycle on-exit" in full_cmd and "opencode --yolo -p 'fix the bug'" in full_cmd
 
 
 def test_subprocess_backend_qwen_skip_permissions_and_prompt(monkeypatch, tmp_path):
