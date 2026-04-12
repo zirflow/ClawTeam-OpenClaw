@@ -101,6 +101,26 @@ def build_agent_prompt(
         "",
     ])
 
+    # Auto-Confirm Timeout Section (always present)
+    lines.extend([
+        "## Auto-Confirm Timeout",
+        "When a prompt requires user confirmation with timeout behavior:",
+        "",
+        "**Multiple choice format:**",
+        "  `A)xxx B)yyy 默认B 30s超时自动选`",
+        "  → After 30 seconds of no response, automatically select option B (the default).",
+        "",
+        "**Yes/No format:**",
+        "  `确认？[Y/n] 默认Y 30s超时自动继续`",
+        "  → After 30 seconds of no response, automatically proceed with Y (the default).",
+        "",
+        "**Implementation notes:**",
+        "- Default option is indicated by uppercase letter or capitalized [Y/n] pattern.",
+        "- Timeout countdown starts when the prompt is displayed.",
+        "- On timeout, the default option is selected automatically.",
+        "",
+    ])
+
     # Coordination Protocol (always present)
     lines.extend([
         "## Coordination Protocol",
