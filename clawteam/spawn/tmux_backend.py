@@ -328,8 +328,10 @@ class TmuxBackend(SpawnBackend):
                 fallback_delay=cfg.spawn_prompt_delay,
             )
             _inject_prompt_via_buffer(target, agent_name, prompt)
-        elif prompt and not is_codex_command(normalized_command) and not is_openclaw_command(normalized_command) and not is_nanobot_command(normalized_command) and not is_gemini_command(normalized_command) and not is_kimi_command(normalized_command) and not is_qwen_command(normalized_command) and not is_opencode_command(normalized_command):
-            # Generic command: append prompt via send-keys
+        elif prompt and not is_codex_command(normalized_command) and not is_nanobot_command(normalized_command) and not is_gemini_command(normalized_command) and not is_kimi_command(normalized_command) and not is_qwen_command(normalized_command) and not is_opencode_command(normalized_command):
+            # Generic command + OpenClaw: append prompt via tmux send-keys.
+            # Note: openclaw tui does NOT support --message flag (it is silently ignored),
+            # so we must inject the task prompt via tmux send-keys after tui starts.
             _wait_for_tui_ready(
                 target,
                 timeout=cfg.spawn_ready_timeout,
