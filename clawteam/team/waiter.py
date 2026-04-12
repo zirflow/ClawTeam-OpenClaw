@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import time
 from dataclasses import dataclass, field
 from typing import Callable
@@ -186,8 +187,11 @@ class TaskWaiter:
             # Auto-respawn if there are pending tasks (fallback for when on-exit hook didn't fire)
             if abandoned:
                 try:
+                    from clawteam.spawn.registry import get_agent_info
                     from clawteam.spawn.respawn import respawn_agent
-                    respawn_agent(self.team_name, agent_name)
+                    # Capture spawn_info BEFORE respawn_agent internally re-reads registry
+                    spawn_info = get_agent_info(self.team_name, agent_name)
+                    respawn_agent(self.team_name, agent_name, spawn_info=spawn_info)
                 except (json.JSONDecodeError, OSError):
                     pass  # Best-effort; on-exit hook is the primary respawn path
 

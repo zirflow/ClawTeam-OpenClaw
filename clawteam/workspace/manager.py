@@ -270,11 +270,12 @@ class WorkspaceManager:
     # ------------------------------------------------------------------
 
     def _find(self, team_name: str, agent_name: str) -> WorkspaceInfo | None:
-        registry = _load_registry(team_name, str(self.repo_root))
-        for ws in registry.workspaces:
-            if ws.agent_name == agent_name:
-                return ws
-        return None
+        with file_locked(_registry_path(team_name)):
+            registry = _load_registry(team_name, str(self.repo_root))
+            for ws in registry.workspaces:
+                if ws.agent_name == agent_name:
+                    return ws
+            return None
 
     def _overlay_untracked_subpath_files(self, worktree_root: Path) -> None:
         source_root = self.repo_root / self.repo_subpath

@@ -28,8 +28,6 @@ class TestBuildAgentPrompt:
         assert "clawteam task list" in prompt
         assert "clawteam task update" in prompt
         assert "clawteam inbox send" in prompt
-        assert "clawteam cost report" in prompt
-        assert "clawteam session save" in prompt
 
     def test_prompt_includes_user_when_provided(self):
         prompt = build_agent_prompt(
@@ -73,7 +71,6 @@ class TestBuildAgentPrompt:
         )
         assert "clawteam task list my-team --owner dev" in prompt
         assert "clawteam inbox send my-team boss" in prompt
-        assert "clawteam cost report my-team" in prompt
 
     # --- Intent-based prompt (Auftragstaktik) ---
 

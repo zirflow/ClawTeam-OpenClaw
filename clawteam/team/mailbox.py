@@ -46,6 +46,15 @@ class MailboxManager:
         self._events_dir = ensure_within_root(get_data_dir() / "teams", team_name, "events")
         self._events_dir.mkdir(parents=True, exist_ok=True)
 
+    MAX_EVENT_FILES = 10000
+
+    def _cleanup_old_events(self) -> None:
+        """Remove oldest event files when count exceeds MAX_EVENT_FILES."""
+        files = sorted(self._events_dir.glob("evt-*.json"))
+        if len(files) > self.MAX_EVENT_FILES:
+            for f in files[: len(files) - self.MAX_EVENT_FILES]:
+                f.unlink(missing_ok=True)
+
     def _log_event(self, msg: TeamMessage) -> None:
         """Persist message to event log (never consumed, for history)."""
         ts = int(time.time() * 1000)
@@ -57,6 +66,7 @@ class MailboxManager:
             encoding="utf-8",
         )
         os.replace(str(tmp), str(path))
+        self._cleanup_old_events()
 
     def get_event_log(self, limit: int = 100) -> list[TeamMessage]:
         """Read event log (newest first). Non-destructive."""
