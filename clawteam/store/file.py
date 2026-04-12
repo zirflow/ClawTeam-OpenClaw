@@ -338,9 +338,9 @@ class FileTaskStore(BaseTaskStore):
             with os.fdopen(fd, "w", encoding="utf-8") as tmp_file:
                 tmp_file.write(task.model_dump_json(indent=2, by_alias=True))
             Path(tmp_name).replace(path)
-        except BaseException:
+        except OSError as e:
             Path(tmp_name).unlink(missing_ok=True)
-            raise
+            raise IOError(f"Failed to save task {task.id}") from e
 
     # ------------------------------------------------------------------ #
     # Resolution manifest (atomic dependent unblocking)                        #

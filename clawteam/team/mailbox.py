@@ -46,7 +46,7 @@ class MailboxManager:
         self._events_dir = ensure_within_root(get_data_dir() / "teams", team_name, "events")
         self._events_dir.mkdir(parents=True, exist_ok=True)
 
-    MAX_EVENT_FILES = 10000
+    MAX_EVENT_FILES = 1000  # Reduced from 10000 to prevent disk bloat
 
     def _cleanup_old_events(self) -> None:
         """Remove oldest event files when count exceeds MAX_EVENT_FILES."""

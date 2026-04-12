@@ -298,7 +298,8 @@ class TmuxBackend(SpawnBackend):
         from clawteam.config import load_config
 
         cfg = load_config()
-        pane_ready_timeout = min(cfg.spawn_ready_timeout, max(4.0, cfg.spawn_prompt_delay + 2.0))
+        # Cap at 60 seconds to prevent hangs
+        pane_ready_timeout = min(cfg.spawn_ready_timeout, max(4.0, cfg.spawn_prompt_delay + 2.0), 60.0)
         if not _wait_for_tmux_pane(
             target,
             timeout_seconds=pane_ready_timeout,
@@ -696,7 +697,7 @@ def _wait_for_cli_ready(
 
         if text == last_content and lines:
             stable_count += 1
-            if stable_count >= 2:
+            if stable_count >= 4:
                 return True
         else:
             stable_count = 0
