@@ -49,7 +49,7 @@ class ClawTeamConfig(BaseModel):
     skip_permissions: bool = True  # pass --dangerously-skip-permissions to claude
     spawn_prompt_delay: float = 2.0  # fallback wait (seconds) if TUI ready-detection times out
     spawn_ready_timeout: float = 30.0  # max seconds to poll for TUI readiness before fallback
-    spawn_timeout: float = 120.0  # hard timeout (seconds) for spawned agent pane — forces exit if agent hangs
+    spawn_timeout: float = 30.0  # hard timeout (seconds) for spawned agent pane — forces exit if agent hangs. 30s is a good fail-fast default. Override with CLAWTEAM_SPAWN_TIMEOUT env var for longer tasks.
     default_model: str = ""  # default model for all agents (fallback)
     model_tiers: dict[str, str] = {}  # custom tier overrides: {"strong": "opus", ...}
 
