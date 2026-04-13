@@ -265,7 +265,10 @@ def test_tmux_backend_uses_configured_timeout_for_workspace_trust_prompt(monkeyp
             return "/usr/bin/codex"
         return original_which(name, path=path)
 
+    # Must patch both the module-level import AND the config module reference,
+    # since Python resolves the import binding at load time.
     monkeypatch.setattr("clawteam.config.load_config", lambda: ClawTeamConfig(spawn_ready_timeout=42.0))
+    monkeypatch.setattr("clawteam.spawn.tmux_backend.load_config", lambda: ClawTeamConfig(spawn_ready_timeout=42.0))
     monkeypatch.setattr("clawteam.spawn.tmux_backend.shutil.which", fake_which)
     monkeypatch.setattr("clawteam.spawn.command_validation.shutil.which", fake_which)
     monkeypatch.setattr("clawteam.spawn.tmux_backend.subprocess.run", fake_run)
@@ -615,6 +618,7 @@ def test_tmux_backend_waits_for_pane_before_declaring_failure(monkeypatch, tmp_p
         return None
 
     monkeypatch.setattr("clawteam.config.load_config", lambda: ClawTeamConfig())
+    monkeypatch.setattr("clawteam.spawn.tmux_backend.load_config", lambda: ClawTeamConfig())
     monkeypatch.setattr("clawteam.spawn.tmux_backend.shutil.which", fake_which)
     monkeypatch.setattr("clawteam.spawn.command_validation.shutil.which", fake_which)
     monkeypatch.setattr("clawteam.spawn.tmux_backend.subprocess.run", fake_run)
@@ -644,7 +648,9 @@ def test_tmux_backend_waits_for_pane_before_declaring_failure(monkeypatch, tmp_p
     )
 
     assert "spawned" in result
-    assert pane_calls >= 3
+    # pane_ready_timeout = 2s with poll_interval=0.2s gives 10 polls,
+    # but fake_run returns pane only at call >= 3, so we get 2 "no pane" calls.
+    assert pane_calls >= 2
     assert any(call[:3] == ["tmux", "list-panes", "-t"] for call in run_calls)
 
 
