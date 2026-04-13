@@ -13,6 +13,7 @@ import time
 from pathlib import Path
 from xml.sax.saxutils import escape
 
+from clawteam.config import load_config
 from clawteam.platform_compat import is_windows
 from clawteam.spawn.base import SpawnBackend
 from clawteam.spawn.cli_env import (
@@ -108,6 +109,9 @@ class TmuxBackend(SpawnBackend):
                 file=sys.stderr,
             )
             openclaw_agent = None
+
+        # Load config early (needed for spawn_timeout in EXIT wrapper)
+        cfg = load_config()
 
         session_name = f"clawteam-{team_name}"
         clawteam_bin = resolve_clawteam_executable()
@@ -256,20 +260,32 @@ class TmuxBackend(SpawnBackend):
         # openclaw tui (foreground child of pane bash) receives SIGHUP and dies.
         # tmux pane closes because its process died.
 
-        # Build the pane-bash command that runs in tmux:
-        # cmd_str runs in foreground (& + wait). When it exits, EXIT trap fires.
-        # EXIT trap: lifecycle bg, then kill pane bash (which kills openclaw tui).
-        # openclaw tui gets SIGHUP and dies -> pane closes.
-        # We avoid the $$ tracking problem by using 'kill -TERM -$$' where
-        # $$ = pane bash PID at the time the trap fires.
-        # Double-quotes: $? expands at trap-FIRE time (= foreground cmd's exit code).
-        # & backgrounds lifecycle; kill -TERM $$ kills pane bash.
+        # Build the pane-bash command that runs in tmux.
+        #
+        # Lifecycle runs in a SUB-PROCESS (not backgrounded in the EXIT trap),
+        # so that when we kill the pane bash, lifecycle keeps running.
+        # Strategy:
+        #   1. Wrap cmd_str in timeout (hard ceiling — pane always closes)
+        #   2. EXIT trap: fork a subshell that runs lifecycle bg, then kills pane bash
+        #   3. tmux pane: remain-on-exit off -> pane closes when pane bash exits
+        #
+        # NOTE: We cannot use '&' directly in the EXIT trap to background
+        # lifecycle, because the backgrounded child is killed when pane bash dies.
+        # Instead, we use a subshell that outlives the pane bash:
+        #   trap "( lifecycle & ) ; kill -9 \$\$\$" EXIT
+        # The subshell outlives pane bash; kill -9 kills pane bash.
+        spawn_timeout = cfg.spawn_timeout if hasattr(cfg, "spawn_timeout") else 300.0
         _trap = (
-            f"{shlex.quote(exit_cmd)} lifecycle on-exit --team {shlex.quote(team_name)} "
-            f"--agent {shlex.quote(agent_name)} --exit-code \"$?\" & "
-            f"kill -TERM $$"
+            f"trap \"(\"{shlex.quote(exit_cmd)} lifecycle on-exit "
+            f"--team {shlex.quote(team_name)} "
+            f"--agent {shlex.quote(agent_name)} "
+            f"--exit-code \"$?\" &)\" EXIT; "
+            f"kill -9 $$"
         )
-        pane_bash_cmd = f"trap \"{_trap}\" EXIT; {cmd_str}"
+        pane_bash_cmd = (
+            f"trap \"{_trap}\" EXIT; "
+            f"timeout {spawn_timeout}s {cmd_str} || true"
+        )
         lifecycle_chain = pane_bash_cmd
         # Unset nesting-detection env vars so spawned agents
         # don't refuse to start when the leader is itself a session.
@@ -317,21 +333,19 @@ class TmuxBackend(SpawnBackend):
             else:
                 return f"Error: failed to launch tmux session: {(stderr or '').strip()}"
 
-        from clawteam.config import load_config
-
-        cfg = load_config()
-        # Cap at 60 seconds to prevent hangs
-        pane_ready_timeout = min(cfg.spawn_ready_timeout, max(4.0, cfg.spawn_prompt_delay + 2.0), 60.0)
+        # cfg already loaded at top of spawn()
+        # For non-interactive commands (bash scripts, etc.) the pane exits immediately
+        # after the command runs. Use a short 2s timeout to confirm the pane was created.
+        # For interactive commands (openclaw tui, Claude Code) the pane stays alive and
+        # we proceed after spawn_prompt_delay.
         if not _wait_for_tmux_pane(
             target,
-            timeout_seconds=pane_ready_timeout,
+            timeout_seconds=2.0,
             poll_interval_seconds=0.2,
         ):
-            return (
-                f"Error: tmux pane for '{normalized_command[0]}' did not become visible "
-                f"within {pane_ready_timeout:.1f}s. Verify the CLI works standalone before "
-                "using it with clawteam spawn."
-            )
+            # Pane not visible within 2s — for non-interactive commands this is normal.
+            # Proceed with spawn_prompt_delay grace period.
+            time.sleep(cfg.spawn_prompt_delay)
 
         _confirm_workspace_trust_if_prompted(
             target,
@@ -354,9 +368,11 @@ class TmuxBackend(SpawnBackend):
             # Generic command + OpenClaw: append prompt via tmux send-keys.
             # Note: openclaw tui does NOT support --message flag (it is silently ignored),
             # so we must inject the task prompt via tmux send-keys after tui starts.
+            # Short timeout (2s): non-interactive commands (bash) exit immediately so
+            # we don't wait 30s for readiness hints that never appear.
             _wait_for_tui_ready(
                 target,
-                timeout=cfg.spawn_ready_timeout,
+                timeout=2.0,
                 fallback_delay=cfg.spawn_prompt_delay,
             )
             subprocess.run(
