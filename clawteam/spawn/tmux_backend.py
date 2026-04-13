@@ -269,21 +269,21 @@ class TmuxBackend(SpawnBackend):
         #   2. EXIT trap: fork a subshell that runs lifecycle bg, then kills pane bash
         #   3. tmux pane: remain-on-exit off -> pane closes when pane bash exits
         #
-        # NOTE: We cannot use '&' directly in the EXIT trap to background
-        # lifecycle, because the backgrounded child is killed when pane bash dies.
-        # Instead, we use a subshell that outlives the pane bash:
-        #   trap "( lifecycle & ) ; kill -9 \$\$\$" EXIT
-        # The subshell outlives pane bash; kill -9 kills pane bash.
+        # EXIT trap: backgrounded lifecycle + kill pane bash on exit.
+        # '&' in trap body keeps lifecycle alive after pane bash dies.
+        # lifecycle inherits the pane bash's exit code via "$?".
         spawn_timeout = cfg.spawn_timeout if hasattr(cfg, "spawn_timeout") else 300.0
-        _trap = (
-            f"trap \"(\"{shlex.quote(exit_cmd)} lifecycle on-exit "
+        lifecycle_cmd = (
+            f"{shlex.quote(exit_cmd)} lifecycle on-exit "
             f"--team {shlex.quote(team_name)} "
             f"--agent {shlex.quote(agent_name)} "
-            f"--exit-code \"$?\" &)\" EXIT; "
-            f"kill -9 $$"
+            f'--exit-code "$?"'
         )
+        # Single EXIT trap: run lifecycle in bg, then kill pane bash.
+        # '( ... & ) ; kill -9 $$' — & backgrounds lifecycle, so it outlives pane bash.
+        _trap_body = f"( {lifecycle_cmd} & ) ; kill -9 $$"
         pane_bash_cmd = (
-            f"trap \"{_trap}\" EXIT; "
+            f"trap {shlex.quote(_trap_body)} EXIT; "
             f"timeout {spawn_timeout}s {cmd_str} || true"
         )
         lifecycle_chain = pane_bash_cmd
