@@ -249,18 +249,28 @@ class TmuxBackend(SpawnBackend):
         # to let bash exit naturally, but the EXIT hook's kill $$ must fire first.
         exit_cmd = shlex.quote(clawteam_bin) if os.path.isabs(clawteam_bin) else "clawteam"
         tmux_target = f"{shlex.quote(session_name)}:{shlex.quote(agent_name)}"
-        # Set remain-on-exit before running the command, so pane stays open
-        # when foreground process exits (instead of tmux respawning bash)
-        # EXIT hook: run lifecycle in background (don't block), then kill the
-        # pane's bash process ($$ = pane's bash PID when trap fires).
-        # Lifecycle runs after main command completes
-        exit_cmd = shlex.quote(clawteam_bin) if os.path.isabs(clawteam_bin) else "clawteam"
-        lifecycle_subshell = (
-            f"_ec=$?; {exit_cmd} lifecycle on-exit --team {shlex.quote(team_name)} "
-            f"--agent {shlex.quote(agent_name)} --exit-code \"$_ec\"; "
-            f"exit $_ec"
+        # Pane bash lifecycle for closing openclaw tui:
+        # cmd_str runs in foreground (& background). When it exits, bash's
+        # EXIT trap fires WHILE pane bash is still alive (blocked in wait).
+        # Trap runs lifecycle in bg, sends SIGTERM to pane bash, exits pane bash.
+        # openclaw tui (foreground child of pane bash) receives SIGHUP and dies.
+        # tmux pane closes because its process died.
+
+        # Build the pane-bash command that runs in tmux:
+        # cmd_str runs in foreground (& + wait). When it exits, EXIT trap fires.
+        # EXIT trap: lifecycle bg, then kill pane bash (which kills openclaw tui).
+        # openclaw tui gets SIGHUP and dies -> pane closes.
+        # We avoid the $$ tracking problem by using 'kill -TERM -$$' where
+        # $$ = pane bash PID at the time the trap fires.
+        # Double-quotes: $? expands at trap-FIRE time (= foreground cmd's exit code).
+        # & backgrounds lifecycle; kill -TERM $$ kills pane bash.
+        _trap = (
+            f"{shlex.quote(exit_cmd)} lifecycle on-exit --team {shlex.quote(team_name)} "
+            f"--agent {shlex.quote(agent_name)} --exit-code \"$?\" & "
+            f"kill -TERM $$"
         )
-        lifecycle_chain = f"{cmd_str} || true; {lifecycle_subshell}"
+        pane_bash_cmd = f"trap \"{_trap}\" EXIT; {cmd_str}"
+        lifecycle_chain = pane_bash_cmd
         # Unset nesting-detection env vars so spawned agents
         # don't refuse to start when the leader is itself a session.
         unset_clause = "unset CLAUDECODE CLAUDE_CODE_ENTRYPOINT CLAUDE_CODE_SESSION OPENCLAW_NESTED 2>/dev/null; "
