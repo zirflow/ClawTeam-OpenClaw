@@ -1,6 +1,6 @@
 ---
 name: clawteam
-description: "Multi-agent swarm coordination via the ClawTeam CLI. Use when the user wants to create agent teams, spawn multiple agents to work in parallel, coordinate tasks with dependencies, broadcast messages between agents, monitor progress via kanban board, or launch pre-built team templates (hedge-fund, code-review, research-paper). ClawTeam uses git worktree isolation + tmux + filesystem-based messaging. Trigger phrases: team, swarm, multi-agent, clawteam, spawn agents, parallel agents, agent team."
+description: "Multi-agent swarm coordination for OpenClaw agents and Claude Code. Use when: the user wants to create agent teams, spawn multiple agents to work in parallel, coordinate tasks with dependencies, broadcast messages between agents, monitor progress via kanban board, or launch pre-built team templates (hedge-fund, code-review, research-paper). Also use when the user asks to: split this task across agents, run multiple agents at once, have agents work together, coordinate a team of agents. ClawTeam uses git worktree isolation + tmux/subprocess + filesystem-based messaging. Trigger phrases: clawteam, multi-agent, agent team, spawn agents, parallel agents, swarm, use clawteam, create a team, let agents work together, coordinate agents, split work across agents, multiple agents at once, hedge fund analysis, code review team, research team, research paper team."
 ---
 
 # ClawTeam — Multi-Agent Swarm Coordination
@@ -10,6 +10,29 @@ description: "Multi-agent swarm coordination via the ClawTeam CLI. Use when the 
 ClawTeam is a CLI tool (`clawteam`) for orchestrating multiple AI agents as self-organizing swarms. It uses git worktree isolation, tmux windows, and filesystem-based messaging. OpenClaw is the default agent backend.
 
 **CLI binary**: `clawteam` (installed via pip, available in PATH)
+
+
+## 🛠️ Install (for AI Agents)
+
+If `clawteam` is not installed, install it first:
+
+```bash
+# Clone the Zirflow-maintained fork (includes OpenClaw fixes)
+git clone https://github.com/zirflow/ClawTeam-OpenClaw.git /tmp/ClawTeam-OpenClaw
+
+# Install CLI (full OpenClaw integration)
+pip install -e /tmp/ClawTeam-OpenClaw --break-system-packages
+
+# Create symlink so clawteam is always on PATH
+mkdir -p ~/bin
+ln -sf "$(which clawteam)" ~/bin/clawteam
+
+# Verify
+clawteam --version
+```
+
+For humans: `pip install -e "git+https://github.com/zirflow/ClawTeam-OpenClaw.git#egg=clawteam" --break-system-packages`
+
 
 ## Quick Start
 
@@ -80,12 +103,16 @@ clawteam board serve --port 8080   # Web dashboard
 **IMPORTANT**: Always use the default command (`openclaw`) — do NOT override to `claude` or other agents. The default handles permissions, prompt injection, and nesting detection correctly. If you specify `claude` as the command, agents will get stuck on interactive permission prompts.
 
 ```bash
-# Default (RECOMMENDED): spawns openclaw tui in tmux with prompt
+# Default (tmux backend): openclaw tui in tmux — routes to main agent, may queue if busy
 clawteam spawn -t <team> -n <name> --task "<task description>"
 
-# Explicit backend (still uses openclaw by default)
+# Subprocess backend (RECOMMENDED for bash commands):
+# - Does NOT route to main agent — independent subprocess, <2s completion
+# - Exit Protocol via Python monitor thread (subprocess_wrapper.py)
+clawteam spawn subprocess -t <team> -n <name> -- bash -c 'echo DONE'
+
+# tmux backend (for interactive AI agent tasks):
 clawteam spawn tmux -t <team> -n <name> --task "<task>"
-clawteam spawn subprocess -t <team> -n <name> --task "<task>"
 
 # With git worktree isolation
 clawteam spawn -t <team> -n <name> --task "<task>" --workspace --repo /path/to/repo

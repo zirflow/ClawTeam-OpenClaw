@@ -49,6 +49,31 @@ Works with [OpenClaw](https://openclaw.ai) (default), [Claude Code](https://clau
 
 ---
 
+
+
+---
+
+## 🎯 Maintained by Zirflow 臻孚
+
+**ClawTeam-OpenClaw** is deeply maintained by [Zirflow 臻孚](https://zirflow.com) — a team building production-ready AI agent infrastructure.
+
+This fork adds critical production reliability fixes not found in upstream:
+
+| Fix | Why it matters |
+|-----|---------------|
+| **EXIT Protocol** | Worker panes reliably close after task completion — no zombie panes |
+| **subprocess backend** | Bash workers run independently without main agent routing (<2s spawn) |
+| **spawn_timeout 30s** | Fast fail when workers hang — don't wait 2 minutes |
+| **spawn_ready_timeout 2s** | Workers start in <2s instead of 30s |
+| **remain-on-exit off** | Dead panes disappear immediately |
+| **OpenClaw skill-ready** | Drop-in SKILL.md for OpenClaw agent installation |
+
+**🚀 For AI Agent Teams**: See [Install → For OpenClaw Agents](#for-openclaw-agents) below.
+
+**👤 For Humans**: See [Install → One-Line Install](#one-line-install) below.
+
+---
+
 ## Why ClawTeam?
 
 Current AI agents are powerful but work in **isolation**. ClawTeam lets agents self-organize into teams — splitting work, communicating, and converging on results without human micromanagement.
@@ -310,6 +335,51 @@ This script is intended for Linux, macOS, and WSL shells, not native PowerShell.
 | `clawteam --version` shows "Coming Soon" | Installed the npm name-squatting package (`a9logic`, unrelated to this project) | `npm uninstall -g clawteam`, then reinstall per Step 2 |
 
 ---
+
+
+### For OpenClaw Agents 🦞
+
+Install ClawTeam as an OpenClaw skill so your AI agents can spawn multi-agent swarms:
+
+```bash
+# Method A: Clone + pip install (full setup, recommended)
+git clone https://github.com/zirflow/ClawTeam-OpenClaw.git /path/to/ClawTeam-OpenClaw
+cd /path/to/ClawTeam-OpenClaw
+pip install -e .
+
+# Then copy SKILL.md to your OpenClaw agent's skills directory:
+cp SKILL.md ~/.openclaw/workspace/skills/clawteam/SKILL.md
+```
+
+Or, in an OpenClaw agent conversation, the agent can run:
+```bash
+git clone https://github.com/zirflow/ClawTeam-OpenClaw.git /tmp/ClawTeam-OpenClaw
+pip install -e /tmp/ClawTeam-OpenClaw --break-system-packages
+mkdir -p ~/.openclaw/workspace/skills/clawteam
+cp /tmp/ClawTeam-OpenClaw/skills/openclaw/SKILL.md ~/.openclaw/workspace/skills/clawteam/
+```
+
+> **Trigger phrases** that activate ClawTeam skill:  
+> `team`, `swarm`, `multi-agent`, `clawteam`, `spawn agents`, `parallel agents`, `agent team`, `use clawteam to...`, `split work across agents`
+
+After installation, the agent can self-coordinate a team by simply being told the goal:
+```
+"Build a web app. Use clawteam to split the work across multiple agents."
+```
+
+### One-Line Install 👤
+
+```bash
+git clone https://github.com/zirflow/ClawTeam-OpenClaw.git && cd ClawTeam-OpenClaw && pip install -e . && mkdir -p ~/bin && ln -sf "$(which clawteam)" ~/bin/clawteam && echo "✅ ClawTeam installed: $(clawteam --version)"
+```
+
+Or without cloning (requires Git):
+
+```bash
+pip install -e "git+https://github.com/zirflow/ClawTeam-OpenClaw.git#egg=clawteam" --break-system-packages
+mkdir -p ~/bin && ln -sf "$(which clawteam)" ~/bin/clawteam
+```
+
 
 ## Use Cases
 

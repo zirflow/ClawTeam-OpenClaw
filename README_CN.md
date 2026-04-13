@@ -19,7 +19,9 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/zirflow/ClawTeam-OpenClaw/actions"><img src="https://img.shields.io/github/actions/workflow/status/zirflow/ClawTeam-OpenClaw/CI?style=for-the-badge" alt="CI"></a>
   <a href="https://github.com/HKUDS/ClawTeam"><img src="https://img.shields.io/badge/upstream-HKUDS%2FClawTeam-purple?style=for-the-badge" alt="Upstream"></a>
+  <a href="https://zirflow.com"><img src="https://img.shields.io/badge/maintained%20by-Zirflow臻孚-teal?style=for-the-badge" alt="Zirflow"></a>
   <a href="#-快速开始"><img src="https://img.shields.io/badge/Quick_Start-3_min-blue?style=for-the-badge" alt="Quick Start"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge" alt="License"></a>
 </p>
@@ -28,7 +30,7 @@
   <img src="https://img.shields.io/badge/python-≥3.10-blue?logo=python&logoColor=white" alt="Python">
   <img src="https://img.shields.io/badge/agents-OpenClaw_%7C_Claude_Code_%7C_Codex_%7C_nanobot-blueviolet" alt="Agents">
   <img src="https://img.shields.io/badge/transport-File_%7C_ZeroMQ_P2P-orange" alt="Transport">
-  <img src="https://img.shields.io/badge/version-0.3.0-teal" alt="Version">
+  <img src="https://img.shields.io/badge/version-0.3.1-zr1-blueviolet" alt="Version">
 </p>
 
 > **[HKUDS/ClawTeam](https://github.com/HKUDS/ClawTeam) 的 Fork 版本**，深度集成 OpenClaw：默认使用 `openclaw` 智能体、每个智能体独立会话隔离、执行审批自动配置，以及生产级加固的进程生成后端。所有上游修复均已同步。
@@ -52,6 +54,29 @@
 | **隔离方式** | Git worktrees（真实分支） | 容器或虚拟环境 |
 
 ---
+
+
+
+---
+
+## 🎯 由 Zirflow 臻孚 深度维护
+
+**ClawTeam-OpenClaw** 是由 [Zirflow 臻孚](https://zirflow.com) 深度维护的生产级版本——一支专注于构建 AI 智能体基础设施的团队。
+
+这个 Fork 在上游基础上添加了关键的生产可靠性修复：
+
+| 修复项 | 为什么重要 |
+|--------|-----------|
+| **EXIT Protocol** | Worker 窗口在任务完成后可靠关闭——无僵尸 pane |
+| **subprocess 后端** | Bash worker 独立运行，不走 main agent（<2秒启动）|
+| **spawn_timeout 30s** | worker 超时快速失败——不再傻等 2 分钟 |
+| **spawn_ready_timeout 2s** | worker 在 2 秒内就绪，而非 30 秒 |
+| **remain-on-exit off** | 死掉的 pane 立即消失 |
+| **OpenClaw Skill 即装即用** | 一键安装为 OpenClaw 技能，智能体立即会用 |
+
+**🚀 给 AI Agent 用**：见下方 [安装 → 给 OpenClaw 智能体用](#给-openclaw-智能体用-) 一节。
+
+**👤 给人类用**：见下方 [安装 → 一行命令安装](#一行命令安装--) 一节。
 
 ## 工作原理
 
@@ -276,6 +301,49 @@ bash scripts/install-openclaw.sh
 | `clawteam --version` 显示 "Coming Soon" | 误装了 npm 同名抢注包（`a9logic`，与本项目无关） | `npm uninstall -g clawteam`，然后按第二步重新安装 |
 
 ---
+
+
+### 给 OpenClaw 智能体用 🦞
+
+将 ClawTeam 安装为 OpenClaw 技能，让你的 AI 智能体能够自组织多智能体集群：
+
+```bash
+# 方法 A: Clone + pip install（完整安装，推荐）
+git clone https://github.com/zirflow/ClawTeam-OpenClaw.git /path/to/ClawTeam-OpenClaw
+cd /path/to/ClawTeam-OpenClaw
+pip install -e .
+
+# 然后复制 SKILL.md 到你的 OpenClaw 智能体技能目录：
+cp skills/openclaw/SKILL.md ~/.openclaw/workspace/skills/clawteam/SKILL.md
+```
+
+或者，在 OpenClaw 智能体对话中，智能体可以直接运行：
+```bash
+git clone https://github.com/zirflow/ClawTeam-OpenClaw.git /tmp/ClawTeam-OpenClaw
+pip install -e /tmp/ClawTeam-OpenClaw --break-system-packages
+mkdir -p ~/.openclaw/workspace/skills/clawteam
+cp /tmp/ClawTeam-OpenClaw/skills/openclaw/SKILL.md ~/.openclaw/workspace/skills/clawteam/
+```
+
+> **触发词**（让智能体使用 ClawTeam）：  
+> `多智能体团队`、`并行任务`、`拆分工作`、`让智能体协作`、`使用 clawteam`、`创建团队`、`spawn agents`、`parallel agents`、`agent team`
+
+安装后，只需告诉智能体目标，它就会自组织团队：
+```
+"构建一个网页应用。用 clawteam 拆分任务给多个智能体并行处理。"
+```
+
+### 一行命令安装 👤
+
+```bash
+git clone https://github.com/zirflow/ClawTeam-OpenClaw.git && cd ClawTeam-OpenClaw && pip install -e . && mkdir -p ~/bin && ln -sf "$(which clawteam)" ~/bin/clawteam && echo "✅ 安装完成：$(clawteam --version)"
+```
+
+一行命令（不 clone，用 Git pip 安装）：
+```bash
+pip install -e "git+https://github.com/zirflow/ClawTeam-OpenClaw.git#egg=clawteam" --break-system-packages && mkdir -p ~/bin && ln -sf "$(which clawteam)" ~/bin/clawteam
+```
+
 
 ## 应用场景
 
