@@ -383,11 +383,12 @@ class TmuxBackend(SpawnBackend):
 
         self._agents[agent_name] = target
 
-        # Set remain-on-exit ON on the window (not pane) to prevent tmux respawning bash
-        # when the foreground process exits. This keeps the pane attached to the dead
-        # process instead of creating a new bash.
+        # Set remain-on-exit OFF on the window so tmux closes the pane immediately
+        # when pane bash dies (from EXIT trap's kill -9 $$).
+        # With OFF: pane dies → window closes automatically.
+        # With ON (old): pane dies but window stays visible as dead (UX bug).
         subprocess.run(
-            ["tmux", "set-window-option", "-t", target, "remain-on-exit", "on"],
+            ["tmux", "set-window-option", "-t", target, "remain-on-exit", "off"],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
         )
